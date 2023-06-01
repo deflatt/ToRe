@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Projects\Sandbox
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Testing", "Projects\Testing\Testing.vcxproj", "{7D1F2134-737E-437E-9A91-C37F4C3CCDEA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Essentials", "Libraries\Essentials\Essentials.vcxproj", "{A6C9E0EF-B690-4E00-9043-B534148CD9DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -39,6 +41,10 @@ Global
 		{7D1F2134-737E-437E-9A91-C37F4C3CCDEA}.Debug|x64.Build.0 = Debug|x64
 		{7D1F2134-737E-437E-9A91-C37F4C3CCDEA}.Release|x64.ActiveCfg = Release|x64
 		{7D1F2134-737E-437E-9A91-C37F4C3CCDEA}.Release|x64.Build.0 = Release|x64
+		{A6C9E0EF-B690-4E00-9043-B534148CD9DA}.Debug|x64.ActiveCfg = Debug|x64
+		{A6C9E0EF-B690-4E00-9043-B534148CD9DA}.Debug|x64.Build.0 = Debug|x64
+		{A6C9E0EF-B690-4E00-9043-B534148CD9DA}.Release|x64.ActiveCfg = Release|x64
+		{A6C9E0EF-B690-4E00-9043-B534148CD9DA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,6 +54,7 @@ Global
 		{8213B3D3-63B9-4EE9-9D95-3ACD0239C536} = {518BC356-24BF-4E76-886D-E9DBF6C13496}
 		{C9431A5E-8376-42DB-B6BE-5CB1FB20847D} = {615397A5-CE7D-4348-9306-56D359D027D7}
 		{7D1F2134-737E-437E-9A91-C37F4C3CCDEA} = {615397A5-CE7D-4348-9306-56D359D027D7}
+		{A6C9E0EF-B690-4E00-9043-B534148CD9DA} = {0A753A91-892B-4151-A967-9CE41856E76B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CE5F6B75-82A6-40BD-85C3-A9A412353009}
