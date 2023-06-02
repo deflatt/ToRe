@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="src\Array.ixx" />
     <ClCompile Include="src\Definitions.ixx" />
+    <ClCompile Include="src\Procedure.ixx" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
