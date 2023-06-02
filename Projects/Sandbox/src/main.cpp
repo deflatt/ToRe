@@ -1,31 +1,19 @@
 #include <iostream>
+#include <Windows.h>
+#undef CreateWindow
 
 import TR.Essentials.Array;
 import TR.Essentials.Procedure;
+import TR.Windows.Window;
 using namespace TR;
-
-struct Base {
-	int b = 3;
-	virtual ~Base() {}
-};
-
-struct Test : public Base {
-	int t = 5;
-};
 
 int main() {
 
-	ProcedureSet<Base*> set = {};
-	
-	Procedure<Test*> proc = [](Test* t) {
-		std::cout << t->t << std::endl;
-	};
-	set.Insert(&proc);
+	Windows::Context::_Context window = {};
+	Windows::Context::CreateClass(&window, "ToRe Window Class", 0);
+	Windows::Context::CreateWindow(&window, "ToRe Window", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, { 100, 100 }, { 1280, 720 });
 
-	Test t;
-	t.t = 7;
-	Base* b = &t;
-	set(b);
+	while (true);
 
 	return 0;
 }

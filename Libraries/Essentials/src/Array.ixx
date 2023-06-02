@@ -202,18 +202,18 @@ namespace TR {
 			TR_ARRAY_ELEM_ALIAS(a, 3);
 		};
 
-		#define PEIO_ARRAY_ALIAS(x, n)  \
+		#define TR_ARRAY_ALIAS(x, n)    \
 		using n##2 = Array< x , 2>;		\
 		using n##3 = Array< x , 3>;		\
 		using n##4 = Array< x , 4>;	
 
-		PEIO_ARRAY_ALIAS(float, Float);
-		PEIO_ARRAY_ALIAS(double, Double);
-		PEIO_ARRAY_ALIAS(int, Int);
-		PEIO_ARRAY_ALIAS(uint, Uint);
-		PEIO_ARRAY_ALIAS(long, Long);
-		PEIO_ARRAY_ALIAS(char, Char);
-		PEIO_ARRAY_ALIAS(byte, Byte);
+		TR_ARRAY_ALIAS(float, Float);
+		TR_ARRAY_ALIAS(double, Double);
+		TR_ARRAY_ALIAS(int, Int);
+		TR_ARRAY_ALIAS(uint, Uint);
+		TR_ARRAY_ALIAS(long, Long);
+		TR_ARRAY_ALIAS(char, Char);
+		TR_ARRAY_ALIAS(byte, Byte);
 
 	}
 
