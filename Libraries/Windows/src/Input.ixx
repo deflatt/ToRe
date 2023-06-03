@@ -4,13 +4,19 @@ module;
 
 export module TR.Windows.Input;
 import TR.Essentials.Procedure;
+import TR.Essentials.Event;
 
 namespace TR::Windows {
 
-	export struct _WinEvent {
+	export struct _WinEvent : public _Event {
 		MSG msg;
 		_WinEvent(MSG msg = {}) : msg(msg) {}
-		virtual ~_WinEvent() {}
+	};
+
+	export struct _WinMessageEvent : public _WinEvent {
+		bool returnDefaultProc;
+		LRESULT returnValue;
+		_WinMessageEvent(MSG msg = {}, bool returnDefaultProc = true, LRESULT returnValue = 0) : _WinEvent(msg), returnDefaultProc(returnDefaultProc), returnValue(returnValue) {}
 	};
 
 	export namespace Input {

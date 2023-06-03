@@ -10,7 +10,14 @@ namespace TR::Windows {
 
 		LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
-			return DefWindowProc(hwnd, msg, wParam, lParam);
+			_WinMessageEvent msgEvent({ hwnd, msg, wParam, lParam });
+			
+			listeners(&msgEvent);
+
+			if (msgEvent.returnDefaultProc)
+				return DefWindowProc(hwnd, msg, wParam, lParam);
+			else
+				return msgEvent.returnValue;
 		}
 
 	}
