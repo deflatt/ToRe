@@ -16,5 +16,11 @@
     <ClCompile Include="src\Procedure.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Exception.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Event.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
