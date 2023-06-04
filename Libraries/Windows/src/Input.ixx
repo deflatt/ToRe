@@ -25,6 +25,13 @@ namespace TR::Windows {
 
 		LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
+		template <typename T_event>
+		void HandleNewEvent(T_event event) {
+			listeners(&event);
+		}
+
 	}
+
+	export using Listener = Procedure<_WinMessageEvent*>;
 
 }

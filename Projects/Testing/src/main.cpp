@@ -1,39 +1,19 @@
+#include <functional>
 #include <iostream>
 
-namespace TR {
-
-	namespace Graphics {
-
-		namespace Context {
-
-			struct _Context {
-
-			};
-
-			void Init(_Context* gfx){}
-
-		}
-		struct _Context {
-			
-			Context::_Context context = {};
-
-			void Init() {
-				Context::Init(&context);
-			}
-
-		};
-
-	}
-
-}
-
+template <typename... Ts>
+struct Foo {
+    std::function<void(Ts...)> fnc = {};
+    Foo() {}
+    Foo(const Foo&) : fnc(
+        [](Ts... ts) {
+            bool test = ([&ts]() { return true; }() && ...);
+            std::cout << test << std::endl;
+        }
+    ) {}
+};
 int main() {
-
-	using namespace TR;
-	using namespace TR::Graphics;
-
-	_Context context = {};
-	context.Init();
-
-	return 0;
+    Foo<int> f;
+    Foo<int> f2 = f;
+    return 0;
 }

@@ -8,6 +8,9 @@
     <Filter Include="Source Files\Input">
       <UniqueIdentifier>{47dc5862-9f95-4e77-8342-206793a4fcfd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Input\Listeners">
+      <UniqueIdentifier>{dc0d804c-12bc-4146-bf97-2d5f1c776355}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Window.ixx">
@@ -24,6 +27,12 @@
     </ClCompile>
     <ClCompile Include="src\Exception.ixx">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KeyboardListener.ixx">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KeyboardListener.cpp">
+      <Filter>Source Files\Input\Listeners</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

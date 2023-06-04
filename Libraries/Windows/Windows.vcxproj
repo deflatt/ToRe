@@ -14,6 +14,8 @@
     <ClCompile Include="src\Exception.ixx" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Input.ixx" />
+    <ClCompile Include="src\KeyboardListener.cpp" />
+    <ClCompile Include="src\KeyboardListener.ixx" />
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\Window.ixx" />
   </ItemGroup>
