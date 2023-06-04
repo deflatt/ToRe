@@ -1,8 +1,6 @@
-module;
-
-#include <Windows.h>
-
 module TR.Windows.KeyboardListener;
+
+import <Windows.h>;
 
 namespace TR::Windows::Input {
 

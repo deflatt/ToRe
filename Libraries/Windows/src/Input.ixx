@@ -1,10 +1,8 @@
-module;
-
-#include <Windows.h>
-
 export module TR.Windows.Input;
-import TR.Essentials.Procedure;
-import TR.Essentials.Event;
+
+export import <Windows.h>;
+export import TR.Essentials.Procedure;
+export import TR.Essentials.Event;
 
 namespace TR::Windows {
 

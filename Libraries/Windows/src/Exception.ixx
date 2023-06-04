@@ -1,9 +1,6 @@
-module;
-
-#include <Windows.h>
-
 export module TR.Windows.Exception;
 
+export import <Windows.h>;
 export import TR.Essentials.Exception;
 
 namespace TR::Windows {

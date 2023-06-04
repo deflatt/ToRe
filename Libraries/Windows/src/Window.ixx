@@ -1,9 +1,7 @@
 export module TR.Windows.Window;
 
-export import <Windows.h>;
 export import <string>;
 export import TR.Essentials.Procedure;
-export import TR.Windows.Input;
 export import TR.Windows.Input;
 export import TR.Essentials.Array;
 export import TR.Windows.Exception;

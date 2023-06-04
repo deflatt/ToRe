@@ -1,8 +1,6 @@
-module;
-
-#include <Windows.h>
-
 module TR.Windows.Input;
+
+import <Windows.h>;
 
 namespace TR::Windows {
 

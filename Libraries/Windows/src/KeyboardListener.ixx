@@ -1,7 +1,3 @@
-module;
-
-#include <Windows.h>
-
 export module TR.Windows.KeyboardListener;
 
 export import TR.Essentials.Array;

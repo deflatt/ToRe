@@ -2,10 +2,9 @@ module;
 
 #include <atlbase.h>
 #include <atlconv.h>
+#undef CreateWindow
 
 module TR.Windows.Window;
-
-#undef CreateWindow
 
 namespace TR::Windows {
 
