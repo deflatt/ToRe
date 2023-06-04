@@ -8,31 +8,37 @@ export namespace TR {
 
 	template <typename... T_args>
 	struct Procedure : public std::function<void(T_args...)> {
+
 		using _function = std::function<void(T_args...)>;
 		using _function::function;
 
-		template <typename... T_from>
-		Procedure(Procedure<T_from...> from) :
+	protected:
+
+		// Necessary because some weird IIFE bug has been introduced :(
+		template <typename T_from, typename T_to>
+		static constexpr bool IsConvertible(T_from& from) {
+			if constexpr (std::is_convertible<T_from, T_to>::value)
+				return true;
+			if (from == nullptr)
+				return true;
+			from = reinterpret_cast<T_from>(dynamic_cast<T_to>(from));
+			return (from != nullptr);
+		}
+
+	public:
+
+		template <typename... T_to>
+		Procedure(Procedure<T_to...> to) :
 			_function(
-				[from](T_args... args) {
-					//bool convertible = ...; oddly not working
-					if (!(
-						[&args]() {
-							if constexpr (std::is_convertible<T_args, T_from>::value)
-								return true;
-							if (args == nullptr)
-								return true;
-							args = reinterpret_cast<T_args>(dynamic_cast<T_from>(args));
-							return (args != nullptr);
-						}()
-							&& ...)) {
-						return; // Arguments couldn't be dynamically converted.
-					}
-					from(((T_from)args)...);
+				[to](T_args... args) {
+					bool convertible = (IsConvertible<T_args, T_to>(args) && ...);
+					if (!convertible)
+						return;
+					to(((T_to)args)...);
 				}
 			) {
-			static_assert(sizeof...(T_args) == sizeof...(T_from), "Can't convert between argument lengths.");
-			static_assert(((std::is_convertible<T_args, T_from>::value || IsDynamicallyConvertible<T_args, T_from>::value) && ...), "Can't convert arguments.");
+			static_assert(sizeof...(T_args) == sizeof...(T_to), "Can't convert between argument lengths.");
+			static_assert(((std::is_convertible<T_args, T_to>::value || IsDynamicallyConvertible<T_args, T_to>::value) && ...), "Can't convert arguments.");
 		}
 	};
 
