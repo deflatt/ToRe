@@ -33,6 +33,9 @@ export namespace TR::Graphics {
 		void Clear(Float4 color);
 		void Render();
 
+		_NODISCARD Graphics::_Context* GetContext() noexcept;
+		_NODISCARD Graphics::Win::_Context* GetWinContext() noexcept;
+
 	protected:
 
 		Graphics::_Context context = {};

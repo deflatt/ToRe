@@ -11,12 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ArrayResource.cpp" />
+    <ClCompile Include="src\ArrayResource.ixx" />
     <ClCompile Include="src\CommandAllocator.cpp" />
     <ClCompile Include="src\CommandAllocator.ixx" />
     <ClCompile Include="src\CommandList.cpp" />
     <ClCompile Include="src\CommandList.ixx" />
     <ClCompile Include="src\CommandQueue.cpp" />
     <ClCompile Include="src\CommandQueue.ixx" />
+    <ClCompile Include="src\ConstantResource.cpp" />
+    <ClCompile Include="src\ConstantResource.ixx" />
     <ClCompile Include="src\DescriptorHeap.cpp" />
     <ClCompile Include="src\DescriptorHeap.ixx" />
     <ClCompile Include="src\Device.cpp" />

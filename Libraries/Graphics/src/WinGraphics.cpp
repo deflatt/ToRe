@@ -86,4 +86,14 @@ namespace TR::Graphics {
 		Graphics::Win::Render(&winContext, &context);
 	}
 
+	Graphics::_Context* TR::Graphics::_WinGraphics::GetContext() noexcept
+	{
+		return &context;
+	}
+
+	Graphics::Win::_Context* _WinGraphics::GetWinContext() noexcept
+	{
+		return &winContext;
+	}
+
 }

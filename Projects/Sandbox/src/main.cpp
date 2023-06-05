@@ -6,6 +6,8 @@ import TR.Windows.Window;
 import TR.Windows.KeyboardListener;
 import TR.Essentials.Procedure;
 import TR.Graphics.WinGraphics;
+import TR.Graphics.ConstantResource;
+import TR.Graphics.ArrayResource;
 
 using namespace TR;
 
@@ -29,6 +31,12 @@ int main() {
 	
 		Graphics::_WinGraphics graphics = {};
 		graphics.Init(window.GetContext()->hwnd, { 1280, 720 });
+
+		Graphics::_ArrayBuffer buffer = {};
+		buffer.Init(1, 8);
+		
+		std::string text = "helloooo";
+		buffer.Upload(&text[0], graphics.GetContext()->cmdList.GetContext()->cmdList.Get());
 
 		float angle = 0.0f;
 

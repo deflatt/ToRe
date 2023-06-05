@@ -94,6 +94,18 @@
     <ClCompile Include="src\WinGraphics.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\ConstantResource.ixx">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ConstantResource.cpp">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArrayResource.ixx">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArrayResource.cpp">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GraphicsHeader.h">
