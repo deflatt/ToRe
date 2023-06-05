@@ -20,6 +20,9 @@
     <Filter Include="Source Files\Utilities\Renderer">
       <UniqueIdentifier>{bd56c107-9e18-46ff-94ec-e9911ab60a43}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Utilities\Resources\Descriptors">
+      <UniqueIdentifier>{a58c51d6-7b12-4870-9125-b9bbffc24be6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Exception.ixx">
@@ -51,6 +54,45 @@
     </ClCompile>
     <ClCompile Include="src\CommandList.cpp">
       <Filter>Source Files\Utilities\Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Resource.ixx">
+      <Filter>Source Files\Utilities\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Resource.cpp">
+      <Filter>Source Files\Utilities\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UploadResource.ixx">
+      <Filter>Source Files\Utilities\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UploadResource.cpp">
+      <Filter>Source Files\Utilities\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DescriptorHeap.cpp">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DescriptorHeap.ixx">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RenderTarget.ixx">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RenderTarget.cpp">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SwapChain.ixx">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SwapChain.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinGraphics.ixx">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WinGraphics.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

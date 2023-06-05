@@ -17,6 +17,9 @@
     <ProjectReference Include="..\..\Libraries\Essentials\Essentials.vcxproj">
       <Project>{a6c9e0ef-b690-4e00-9043-b534148cd9da}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\Graphics\Graphics.vcxproj">
+      <Project>{36903ded-f0e2-4cf1-93fa-ac53474b7a52}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\Libraries\Windows\Windows.vcxproj">
       <Project>{ba89daa3-a8c9-4784-b740-afaa4260762a}</Project>
     </ProjectReference>

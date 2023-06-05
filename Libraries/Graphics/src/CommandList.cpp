@@ -64,4 +64,9 @@ namespace TR::Graphics {
 		CommandList::Close(&context);
 	}
 
+	CommandList::_Context* _CommandList::GetContext() noexcept
+	{
+		return &context;
+	}
+
 }

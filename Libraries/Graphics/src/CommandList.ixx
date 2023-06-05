@@ -43,6 +43,8 @@ export namespace TR::Graphics {
 		void Reset(UINT allocator, UINT index);
 		void Close();
 
+		_NODISCARD CommandList::_Context* GetContext() noexcept;
+
 	protected:
 
 		CommandList::_Context context = {};

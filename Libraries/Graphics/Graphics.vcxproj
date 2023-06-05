@@ -17,10 +17,23 @@
     <ClCompile Include="src\CommandList.ixx" />
     <ClCompile Include="src\CommandQueue.cpp" />
     <ClCompile Include="src\CommandQueue.ixx" />
+    <ClCompile Include="src\DescriptorHeap.cpp" />
+    <ClCompile Include="src\DescriptorHeap.ixx" />
     <ClCompile Include="src\Device.cpp" />
     <ClCompile Include="src\Device.ixx" />
     <ClCompile Include="src\Exception.ixx" />
+    <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\Graphics.ixx" />
+    <ClCompile Include="src\RenderTarget.cpp" />
+    <ClCompile Include="src\RenderTarget.ixx" />
+    <ClCompile Include="src\Resource.cpp" />
+    <ClCompile Include="src\Resource.ixx" />
+    <ClCompile Include="src\SwapChain.cpp" />
+    <ClCompile Include="src\SwapChain.ixx" />
+    <ClCompile Include="src\UploadResource.cpp" />
+    <ClCompile Include="src\UploadResource.ixx" />
+    <ClCompile Include="src\WinGraphics.cpp" />
+    <ClCompile Include="src\WinGraphics.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GraphicsHeader.h" />

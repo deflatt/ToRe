@@ -45,4 +45,9 @@ namespace TR::Graphics {
 		CommandQueue::Execute(&context, list);
 	}
 
+	CommandQueue::_Context* _CommandQueue::GetContext() noexcept
+	{
+		return &context;
+	}
+
 }
