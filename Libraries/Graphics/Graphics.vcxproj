@@ -26,16 +26,27 @@
     <ClCompile Include="src\Device.cpp" />
     <ClCompile Include="src\Device.ixx" />
     <ClCompile Include="src\Exception.ixx" />
+    <ClCompile Include="src\Formats.ixx" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\Graphics.ixx" />
+    <ClCompile Include="src\InputParameter.cpp" />
+    <ClCompile Include="src\InputParameter.ixx" />
+    <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\Renderer.ixx" />
     <ClCompile Include="src\RenderTarget.cpp" />
     <ClCompile Include="src\RenderTarget.ixx" />
     <ClCompile Include="src\Resource.cpp" />
     <ClCompile Include="src\Resource.ixx" />
+    <ClCompile Include="src\Shader.cpp" />
+    <ClCompile Include="src\Shader.ixx" />
     <ClCompile Include="src\SwapChain.cpp" />
     <ClCompile Include="src\SwapChain.ixx" />
     <ClCompile Include="src\UploadResource.cpp" />
     <ClCompile Include="src\UploadResource.ixx" />
+    <ClCompile Include="src\VertexBuffer.cpp" />
+    <ClCompile Include="src\VertexBuffer.ixx" />
+    <ClCompile Include="src\VertexLayout.cpp" />
+    <ClCompile Include="src\VertexLayout.ixx" />
     <ClCompile Include="src\WinGraphics.cpp" />
     <ClCompile Include="src\WinGraphics.ixx" />
   </ItemGroup>

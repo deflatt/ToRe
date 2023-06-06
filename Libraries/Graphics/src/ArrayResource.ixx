@@ -22,7 +22,7 @@ export namespace TR::Graphics {
 
 	}
 
-	struct _ArrayBuffer {
+	struct _ArrayBuffer { // Rewrite in procedural
 
 		void Init(UINT numElements, UINT elementSize);
 

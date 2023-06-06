@@ -106,6 +106,39 @@
     <ClCompile Include="src\ArrayResource.cpp">
       <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
     </ClCompile>
+    <ClCompile Include="src\InputParameter.ixx">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InputParameter.cpp">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VertexLayout.ixx">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VertexLayout.cpp">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Formats.ixx">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.ixx">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shader.ixx">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shader.cpp">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VertexBuffer.ixx">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VertexBuffer.cpp">
+      <Filter>Source Files\Utilities\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GraphicsHeader.h">

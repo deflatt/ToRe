@@ -1,19 +1,14 @@
 #include <functional>
 #include <iostream>
+#include <Windows.h>
 
-template <typename... Ts>
-struct Foo {
-    std::function<void(Ts...)> fnc = {};
-    Foo() {}
-    Foo(const Foo&) : fnc(
-        [](Ts... ts) {
-            bool test = ([&ts]() { return true; }() && ...);
-            std::cout << test << std::endl;
-        }
-    ) {}
-};
+std::string ConvertToString(std::wstring wstr) {
+    int size = WideCharToMultiByte(CP_UTF8, 0)
+}
+
 int main() {
-    Foo<int> f;
-    Foo<int> f2 = f;
+    
+    
+
     return 0;
 }
