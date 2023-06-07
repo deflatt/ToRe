@@ -19,14 +19,14 @@ int main() {
 
 		Graphics::Device::Init();
 
-		Windows::Context::CreateClass("ToRe Window Class", 0);
-		Windows::_Context window = {};
+		Windows::Window::CreateClass("ToRe Window Class", 0);
+		Windows::_Window window = {};
 
 		window.SetClass("ToRe Window Class");
 		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, { 1280, 720 });
 	
 		Graphics::_WinGraphics graphics = {};
-		graphics.Init(window.GetContext()->hwnd, { 1280, 720 });
+		graphics.Init(window.context.hwnd, { 1280, 720 });
 		
 		
 

@@ -17,10 +17,10 @@ export namespace TR::Graphics {
 				_SwapChain swapChain = {};
 			};
 
-			void Init(_Context* context, Graphics::_Context* graphics, HWND hwnd, Long2 size, bool fullscreen = false, UINT numBuffers = 2, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
+			void Init(_Context* win, Graphics::_Context* graphics, HWND hwnd, Long2 size, bool fullscreen = false, UINT numBuffers = 2, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
 
 			void Clear(Graphics::_Context* graphics, Float4 color);
-			void Render(_Context* context, Graphics::_Context* graphics);
+			void Render(_Context* win, Graphics::_Context* graphics);
 
 		}
 
@@ -28,18 +28,13 @@ export namespace TR::Graphics {
 
 	struct _WinGraphics {
 
+		Graphics::_Context graphics = {};
+		Graphics::Win::_Context win = {};
+
 		void Init(HWND hwnd, Long2 size, bool fullscreen = false, UINT numBuffers = 2, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
 
 		void Clear(Float4 color);
 		void Render();
-
-		_NODISCARD Graphics::_Context* GetContext() noexcept;
-		_NODISCARD Graphics::Win::_Context* GetWinContext() noexcept;
-
-	protected:
-
-		Graphics::_Context context = {};
-		Graphics::Win::_Context winContext = {};
 
 	};
 

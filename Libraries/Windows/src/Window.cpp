@@ -8,9 +8,9 @@ module TR.Windows.Window;
 
 namespace TR::Windows {
 
-	namespace Context {
+	namespace Window {
 
-		void TR::Windows::Context::CreateClass(std::string className, UINT classStyles, WNDPROC proc)
+		void CreateClass(std::string className, UINT classStyles, WNDPROC proc)
 		{
 			std::wstring wClassName = std::wstring(CA2W(className.c_str()));
 
@@ -89,44 +89,34 @@ namespace TR::Windows {
 
 	}
 
-	void _Context::SetClass(std::string className)
+	void _Window::SetClass(std::string className)
 	{
-		Context::SetClass(&context, className);
+		Window::SetClass(&context, className);
 	}
 
-	void _Context::CreateClass(std::string className, UINT classStyles, WNDPROC proc)
+	void _Window::CreateClass(std::string className, UINT classStyles, WNDPROC proc)
 	{
-		Context::CreateClass(&context, className, classStyles, proc);
+		Window::CreateClass(&context, className, classStyles, proc);
 	}
 
-	void _Context::CreateWindow(std::string title, DWORD styles, DWORD exStyles, Int2 position, Int2 size)
+	void _Window::CreateWindow(std::string title, DWORD styles, DWORD exStyles, Int2 position, Int2 size)
 	{
-		Context::CreateWindow(&context, title, styles, exStyles, position, size);
+		Window::CreateWindow(&context, title, styles, exStyles, position, size);
 	}
 
-	void _Context::HandleMessages()
+	void _Window::HandleMessages()
 	{
-		Context::HandleMessages(&context);
+		Window::HandleMessages(&context);
 	}
 
-	const Context::_Context* _Context::GetContext() const noexcept
+	void _Window::CloseWindow()
 	{
-		return &context;
+		Window::CloseWindow(&context);
 	}
 
-	Context::_Context* _Context::GetContext() noexcept
+	_Window::~_Window()
 	{
-		return &context;
-	}
-
-	void _Context::CloseWindow()
-	{
-		Context::CloseWindow(&context);
-	}
-
-	_Context::~_Context()
-	{
-		Context::Release(&context);
+		Window::Release(&context);
 	}
 
 }

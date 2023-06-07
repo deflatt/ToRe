@@ -28,18 +28,12 @@ export namespace TR::Graphics {
 
 	struct _Resource {
 
+		Resource::_Context context = {};
+
 		void Init(D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_DESC desc
 			, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
 
 		void Transition(D3D12_RESOURCE_STATES targetState, ID3D12GraphicsCommandList* cmdList);
-
-		_NODISCARD Resource::_Context* GetContext() noexcept;
-
-		// TODO: Add better getters
-
-	protected:
-
-		Resource::_Context context = {};
 
 	};
 

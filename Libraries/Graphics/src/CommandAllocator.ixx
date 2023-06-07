@@ -48,21 +48,15 @@ export namespace TR::Graphics {
 
 	struct _CommandAllocator {
 
+		CommandAllocator::_Context context = {};
+
 		void Init();
 
 		void Signal(ID3D12CommandQueue* cmdQueue);
 		void Wait();
 		void Reset();
 
-		_NODISCARD CommandAllocator::_Context* GetContext() noexcept;
-
 		~_CommandAllocator();
-
-		// TODO: add better getters / setters
-
-	protected:
-
-		CommandAllocator::_Context context = {};
 
 	};
 

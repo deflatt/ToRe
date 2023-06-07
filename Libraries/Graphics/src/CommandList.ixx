@@ -38,16 +38,12 @@ export namespace TR::Graphics {
 
 	struct _CommandList {
 
+		CommandList::_Context context = {};
+
 		void Init(ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators);
 
 		void Reset(UINT allocator, UINT index);
 		void Close();
-
-		_NODISCARD CommandList::_Context* GetContext() noexcept;
-
-	protected:
-
-		CommandList::_Context context = {};
 
 	};
 

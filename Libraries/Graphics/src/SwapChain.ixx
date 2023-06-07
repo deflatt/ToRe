@@ -45,19 +45,15 @@ export namespace TR::Graphics {
 
 	struct _SwapChain {
 
+		SwapChain::_Context context = {};
+
 		void Init(ID3D12CommandQueue* cmdQueue, HWND hwnd, Long2 size
 			, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM, UINT numBuffers = 2, bool fullscreen = false);
 
 		void InitBuffer(Resource::_Context* resource, UINT index);
 		void SwapBuffers();
 
-		_NODISCARD SwapChain::_Context* GetContext() noexcept;
-
 		~_SwapChain();
-
-	protected:
-
-		SwapChain::_Context context = {};
 
 	};
 

@@ -16,61 +16,27 @@ export namespace TR::Graphics {
 				_Resource uploadResource = {};
 			};
 
-			void Init(_Context* context, D3D12_RESOURCE_DESC desc, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
-			void Init(_Context* context, Resource::_Context* resource, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
+			void Init(_Context* upload, D3D12_RESOURCE_DESC desc, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
+			void Init(_Context* upload, Resource::_Context* dstResource, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
 
-			void Upload(_Context* context, Resource::_Context* dstResource, const D3D12_SUBRESOURCE_DATA& data, ID3D12GraphicsCommandList* cmdList);
+			void UploadData(_Context* upload, Resource::_Context* dstResource, const D3D12_SUBRESOURCE_DATA& data, ID3D12GraphicsCommandList* cmdList);
 
 		}
+
+		void Init(Resource::_Context* resource, Upload::_Context* upload, D3D12_RESOURCE_DESC desc
+			, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON
+			, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
 
 	}
 
 	struct _UploadResource {
 
+		Resource::_Context resource = {};
+		Resource::Upload::_Context upload = {};
+
 		void Init(D3D12_RESOURCE_DESC desc, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
 
-		void Upload(const D3D12_SUBRESOURCE_DATA& data, ID3D12GraphicsCommandList* cmdList);
-
-	protected:
-
-		Resource::_Context context = {};
-		Resource::Upload::_Context uploadContext = {};
-
-	};
-
-	namespace Resource {
-
-		void InitBuffer(_Context* context, UINT64 numBytes
-			, D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT
-			, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON
-			, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
-
-		namespace Upload {
-
-			void UploadBuffer(_Context* context, Resource::_Context* dstResource, const void* data, ID3D12GraphicsCommandList* cmdList);
-
-		}
-
-		// Add Texture2D
-
-	}
-
-	struct _BufferResource {
-
-		void Init(UINT64 numBytes
-			, D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT
-			, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON
-			, D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE);
-
-		void Upload(const void* data, ID3D12GraphicsCommandList* cmdList);
-
-		_NODISCARD Resource::_Context* GetContext() noexcept;
-		_NODISCARD Resource::Upload::_Context* GetUploadContext() noexcept;
-
-	protected:
-
-		Resource::_Context context = {};
-		Resource::Upload::_Context uploadContext = {};
+		void UploadData(const D3D12_SUBRESOURCE_DATA& data, ID3D12GraphicsCommandList* cmdList);
 
 	};
 

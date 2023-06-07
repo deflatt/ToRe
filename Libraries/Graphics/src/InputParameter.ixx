@@ -23,22 +23,24 @@ export namespace TR::Graphics {
 		// Maybe add register space
 
 		// Not supported
-		void InitConstant(_Context* context, UINT shaderRegister, UINT num32BitValues);
+		void InitConstant(_Context* inputParameter, UINT shaderRegister, UINT num32BitValues);
 
-		void InitConstantBuffer(_Context* context, UINT shaderRegister);
-		void InitConstantBuffer(_TableParameter* context, UINT shaderRegister);
+		void InitConstantBuffer(_Context* inputParameter, UINT shaderRegister);
+		void InitConstantBuffer(_TableParameter* tableParameter, UINT shaderRegister);
 
-		void InitArrayBuffer(_Context* context, UINT shaderRegister);
-		void InitArrayBuffer(_TableParameter* context, UINT shaderRegister);
+		void InitArrayBuffer(_Context* inputParameter, UINT shaderRegister);
+		void InitArrayBuffer(_TableParameter* tableParameter, UINT shaderRegister);
 
-		void InitRWArrayBuffer(_Context* context, UINT shaderRegister);
-		void InitRWArrayBuffer(_TableParameter* context, UINT shaderRegister);
+		void InitRWArrayBuffer(_Context* inputParameter, UINT shaderRegister);
+		void InitRWArrayBuffer(_TableParameter* tableParameter, UINT shaderRegister);
 
-		void InitParameterTable(_Context* context, std::vector<_TableParameter> parameters);
+		void InitParameterTable(_Context* inputParameter, std::vector<_TableParameter> parameters);
 
 	}
 
 	struct _TableParameter {
+
+		InputParameter::_TableParameter tableParameter = {};
 
 		_TableParameter& ConstantBuffer(UINT shaderRegister);
 		_TableParameter& ArrayBuffer(UINT shaderRegister);
@@ -46,13 +48,11 @@ export namespace TR::Graphics {
 
 		operator InputParameter::_TableParameter() noexcept;
 
-	protected:
-
-		InputParameter::_TableParameter context = {};
-
 	};
 
 	struct _InputParameter {
+
+		InputParameter::_Context inputParameter = {};
 
 		_InputParameter& Constant(UINT shaderRegister, UINT num32BitValues);
 
@@ -63,10 +63,6 @@ export namespace TR::Graphics {
 		_InputParameter& ParameterTable(std::vector<InputParameter::_TableParameter> parameters);
 
 		operator D3D12_ROOT_PARAMETER() noexcept;
-
-	protected:
-
-		InputParameter::_Context context = {};
 
 	};
 

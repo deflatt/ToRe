@@ -8,9 +8,9 @@ export import TR.Windows.Exception;
 
 #undef CreateWindow
 
-namespace TR::Windows {
+export namespace TR::Windows {
 
-	export namespace Context {
+	namespace Window {
 
 		struct E_FailedClassRegistration : public _WinAPIException {
 			E_FailedClassRegistration() : _WinAPIException("Failed to register windows class.") {}
@@ -44,7 +44,9 @@ namespace TR::Windows {
 
 	}
 
-	export struct _Context {
+	export struct _Window {
+
+		Window::_Context context = {};
 
 		void SetClass(std::string className);
 		void CreateClass(std::string className, UINT classStyles, WNDPROC proc = Input::WindowProc);
@@ -54,16 +56,7 @@ namespace TR::Windows {
 
 		void CloseWindow();
 
-		_NODISCARD const Context::_Context* GetContext() const noexcept;
-		_NODISCARD Context::_Context* GetContext() noexcept;
-
-		~_Context();
-
-		// TODO: add better getters / setters
-
-	protected:
-
-		Context::_Context context = {};
+		~_Window();
 
 	};
 

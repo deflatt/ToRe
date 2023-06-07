@@ -88,11 +88,6 @@ namespace TR::Graphics {
 		CommandAllocator::Reset(&context);
 	}
 
-	CommandAllocator::_Context* _CommandAllocator::GetContext() noexcept
-	{
-		return &context;
-	}
-
 	_CommandAllocator::~_CommandAllocator()
 	{
 		CommandAllocator::Release(&context);

@@ -21,7 +21,7 @@ namespace TR::Graphics {
 			}
 
 			HRESULT ret = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT
-				, context->allocators[0][0].GetContext()->cmdAllocator.Get(), nullptr
+				, context->allocators[0][0].context.cmdAllocator.Get(), nullptr
 				, __uuidof(ID3D12GraphicsCommandList), &context->cmdList);
 			if (ret != 0) {
 				throw E_FailedCommandListCreation(ret);
@@ -33,7 +33,7 @@ namespace TR::Graphics {
 			context->allocators[allocator][index].Reset();
 
 			HRESULT ret = context->cmdList->Reset(context->allocators[allocator][index]
-				.GetContext()->cmdAllocator.Get(), nullptr);
+				.context.cmdAllocator.Get(), nullptr);
 			if (ret != 0) {
 				throw E_FailedCommandListReset(ret);
 			}
@@ -62,11 +62,6 @@ namespace TR::Graphics {
 	void _CommandList::Close()
 	{
 		CommandList::Close(&context);
-	}
-
-	CommandList::_Context* _CommandList::GetContext() noexcept
-	{
-		return &context;
 	}
 
 }

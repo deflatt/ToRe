@@ -24,17 +24,13 @@ export namespace TR::Graphics {
 
 	}
 
-	struct _CommandQueue {
+	struct _CommandQueue  {
+
+		CommandQueue::_Context context = {};
 
 		void Init();
 		void Execute(ID3D12CommandList* const* lists, UINT numLists);
 		void Execute(ID3D12CommandList* list);
-
-		_NODISCARD CommandQueue::_Context* GetContext() noexcept;
-
-	protected:
-
-		CommandQueue::_Context context = {};
 
 	};
 

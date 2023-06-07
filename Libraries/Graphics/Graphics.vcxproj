@@ -13,6 +13,8 @@
   <ItemGroup>
     <ClCompile Include="src\ArrayResource.cpp" />
     <ClCompile Include="src\ArrayResource.ixx" />
+    <ClCompile Include="src\BufferResource.cpp" />
+    <ClCompile Include="src\BufferResource.ixx" />
     <ClCompile Include="src\CommandAllocator.cpp" />
     <ClCompile Include="src\CommandAllocator.ixx" />
     <ClCompile Include="src\CommandList.cpp" />
@@ -37,6 +39,8 @@
     <ClCompile Include="src\RenderTarget.ixx" />
     <ClCompile Include="src\Resource.cpp" />
     <ClCompile Include="src\Resource.ixx" />
+    <ClCompile Include="src\RWArrayResource.cpp" />
+    <ClCompile Include="src\RWArrayResource.ixx" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Shader.ixx" />
     <ClCompile Include="src\SwapChain.cpp" />

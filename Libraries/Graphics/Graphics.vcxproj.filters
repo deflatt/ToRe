@@ -139,6 +139,18 @@
     <ClCompile Include="src\VertexBuffer.cpp">
       <Filter>Source Files\Utilities\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="src\BufferResource.ixx">
+      <Filter>Source Files\Utilities\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BufferResource.cpp">
+      <Filter>Source Files\Utilities\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RWArrayResource.ixx">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RWArrayResource.cpp">
+      <Filter>Source Files\Utilities\Resources\Descriptors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GraphicsHeader.h">

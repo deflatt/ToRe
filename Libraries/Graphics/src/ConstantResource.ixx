@@ -4,35 +4,40 @@ module;
 
 export module TR.Graphics.ConstantResource;
 
-export import TR.Graphics.UploadResource;
+export import TR.Graphics.BufferResource;
 export import TR.Graphics.DescriptorHeap;
 
 export namespace TR::Graphics {
 
-	// Resource::Constant ?
 	namespace ConstantResource {
 
 		struct _Context {
 			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		};
 
-		void Init(_Context* context, Resource::_Context* resource);
+		void Init(_Context* constantResource, Resource::_Context* resource);
 
-		void Place(_Context* context, DescriptorHeap::_Context* descriptorHeap, UINT index);
+		void Place(_Context* constantResource, DescriptorHeap::_Context* descriptorHeap, UINT index);
+
+	}
+
+	namespace ConstantResource {
+
+		void InitBuffer(Resource::_Context* resource, Resource::Upload::_Context* upload, ConstantResource::_Context* constantResource
+			, UINT64 numBytes);
 
 	}
 
 	struct _ConstantBuffer {
 
-		void Init(UINT64 size);
+		Resource::_Context resource = {};
+		Resource::Upload::_Context upload = {};
+		ConstantResource::_Context constantResource = {};
+
+		void Init(UINT64 numBytes);
 
 		void Upload(const void* data, ID3D12GraphicsCommandList* cmdList);
 		void Place(DescriptorHeap::_Context* descriptorHeap, UINT index);
-
-	protected:
-
-		_BufferResource resource = {};
-		ConstantResource::_Context context = {};
 
 	};
 

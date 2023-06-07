@@ -19,19 +19,19 @@ export namespace TR::Graphics {
 			UINT handleIncrementSize = 0;
 		};
 
-		void Init(_Context* context, D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+		void Init(_Context* descriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
+
+		_NODISCARD D3D12_CPU_DESCRIPTOR_HANDLE GetHandle(_Context* descriptorHeap, UINT index);
 
 	}
 
 	struct _DescriptorHeap {
 
+		DescriptorHeap::_Context descriptorHeap = {};
+
 		void Init(D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
-		_NODISCARD DescriptorHeap::_Context* GetContext() noexcept;
-
-	protected:
-
-		DescriptorHeap::_Context context = {};
+		_NODISCARD D3D12_CPU_DESCRIPTOR_HANDLE GetHandle(UINT index);
 
 	};
 

@@ -10,58 +10,58 @@ namespace TR::Graphics {
 
 		namespace Win {
 
-			void Init(_Context* context, Graphics::_Context* graphics, HWND hwnd, Long2 size, bool fullscreen, UINT numBuffers, DXGI_FORMAT format)
+			void Init(_Context* win, Graphics::_Context* graphics, HWND hwnd, Long2 size, bool fullscreen, UINT numBuffers, DXGI_FORMAT format)
 			{
 				graphics->cmdQueue.Init();
-				graphics->cmdList.Init(graphics->cmdQueue.GetContext()->cmdQueue.Get(), numBuffers, 2);
+				graphics->cmdList.Init(graphics->cmdQueue.context.cmdQueue.Get(), numBuffers, 2);
 
-				context->swapChain.Init(graphics->cmdQueue.GetContext()->cmdQueue.Get(), hwnd, size, format, numBuffers, fullscreen);
+				win->swapChain.Init(graphics->cmdQueue.context.cmdQueue.Get(), hwnd, size, format, numBuffers, fullscreen);
 				graphics->renderTargets.Init(numBuffers);
 				for (UINT i = 0; i < numBuffers; i++) {
-					context->swapChain.InitBuffer(graphics->renderTargets.GetContext()->renderTargets[i].GetResource(), i);
+					win->swapChain.InitBuffer(&graphics->renderTargets.rtHeap.renderTargets[i].resource, i);
 				}
 				graphics->renderTargets.PlaceTargets();
 			}
 
 			void Clear(Graphics::_Context* graphics, Float4 color)
 			{
-				UINT frameIndex = graphics->renderTargets.GetContext()->frameIndex;
+				UINT frameIndex = graphics->renderTargets.rtHeap.frameIndex;
 
-				ID3D12GraphicsCommandList* cmdList = graphics->cmdList.GetContext()->cmdList.Get();
+				ID3D12GraphicsCommandList* cmdList = graphics->cmdList.context.cmdList.Get();
 
 				graphics->cmdList.Close();
 
 				graphics->cmdQueue.Execute(cmdList);
-				graphics->cmdList.GetContext()->allocators[0][frameIndex].Signal(graphics->cmdQueue.GetContext()->cmdQueue.Get());
+				graphics->cmdList.context.allocators[0][frameIndex].Signal(graphics->cmdQueue.context.cmdQueue.Get());
 
-				graphics->cmdList.GetContext()->allocators[1][frameIndex].Wait();
+				graphics->cmdList.context.allocators[1][frameIndex].Wait();
 				graphics->cmdList.Reset(1, frameIndex);
 
 				// Maybe replace with OO later
-				Resource::Transition(graphics->renderTargets.GetContext()->renderTargets[frameIndex].GetResource()
+				Resource::Transition(&graphics->renderTargets.rtHeap.renderTargets[frameIndex].resource
 					, D3D12_RESOURCE_STATE_RENDER_TARGET, cmdList);
 				
 				graphics->renderTargets.SetCurrent(cmdList);
 				graphics->renderTargets.ClearCurrent(cmdList, color);
 			}
 
-			void Render(_Context* context, Graphics::_Context* graphics)
+			void Render(_Context* win, Graphics::_Context* graphics)
 			{
-				UINT frameIndex = graphics->renderTargets.GetContext()->frameIndex;
+				UINT frameIndex = graphics->renderTargets.rtHeap.frameIndex;
 
-				ID3D12GraphicsCommandList* cmdList = graphics->cmdList.GetContext()->cmdList.Get();
+				ID3D12GraphicsCommandList* cmdList = graphics->cmdList.context.cmdList.Get();
 
-				Resource::Transition(graphics->renderTargets.GetContext()->renderTargets[frameIndex].GetResource()
+				Resource::Transition(&graphics->renderTargets.rtHeap.renderTargets[frameIndex].resource
 					, D3D12_RESOURCE_STATE_RENDER_TARGET, cmdList);
 
 				graphics->cmdList.Close();
-				graphics->cmdList.GetContext()->allocators[0][frameIndex].Wait();
+				graphics->cmdList.context.allocators[0][frameIndex].Wait();
 
 				graphics->cmdQueue.Execute(cmdList);
-				graphics->cmdList.GetContext()->allocators[1][frameIndex].Signal(graphics->cmdQueue.GetContext()->cmdQueue.Get());
+				graphics->cmdList.context.allocators[1][frameIndex].Signal(graphics->cmdQueue.context.cmdQueue.Get());
 
-				context->swapChain.SwapBuffers();
-				frameIndex = context->swapChain.GetContext()->swapChain->GetCurrentBackBufferIndex();
+				win->swapChain.SwapBuffers();
+				frameIndex = win->swapChain.context.swapChain->GetCurrentBackBufferIndex();
 				graphics->renderTargets.SetFrameIndex(frameIndex);
 
 				graphics->cmdList.Reset(0, frameIndex);
@@ -73,27 +73,17 @@ namespace TR::Graphics {
 
 	void _WinGraphics::Init(HWND hwnd, Long2 size, bool fullscreen, UINT numBuffers, DXGI_FORMAT format)
 	{
-		Graphics::Win::Init(&winContext, &context, hwnd, size, fullscreen, numBuffers, format);
+		Graphics::Win::Init(&win, &graphics, hwnd, size, fullscreen, numBuffers, format);
 	}
 
 	void _WinGraphics::Clear(Float4 color)
 	{
-		Graphics::Win::Clear(&context, color);
+		Graphics::Win::Clear(&graphics, color);
 	}
 
 	void _WinGraphics::Render()
 	{
-		Graphics::Win::Render(&winContext, &context);
-	}
-
-	Graphics::_Context* TR::Graphics::_WinGraphics::GetContext() noexcept
-	{
-		return &context;
-	}
-
-	Graphics::Win::_Context* _WinGraphics::GetWinContext() noexcept
-	{
-		return &winContext;
+		Graphics::Win::Render(&win, &graphics);
 	}
 
 }

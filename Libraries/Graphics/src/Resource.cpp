@@ -56,9 +56,4 @@ namespace TR::Graphics {
 		Resource::Transition(&context, targetState, cmdList);
 	}
 
-	Resource::_Context* _Resource::GetContext() noexcept
-	{
-		return &context;
-	}
-
 }

@@ -85,11 +85,6 @@ namespace TR::Graphics {
 		SwapChain::SwapBuffers(&context);
 	}
 
-	SwapChain::_Context* _SwapChain::GetContext() noexcept
-	{
-		return &context;
-	}
-
 	_SwapChain::~_SwapChain()
 	{
 		SwapChain::Release(&context);

@@ -44,45 +44,40 @@ namespace TR::Graphics {
 		RenderTarget::Place(&resource, descriptorHeap, index);
 	}
 
-	Resource::_Context* _RenderTarget::GetResource() noexcept
-	{
-		return &resource;
-	}
-
 	namespace RenderTargetHeap {
 
-		void Init(_Context* context, UINT numRenderTargets)
+		void Init(_Context* context, DescriptorHeap::_Context* descriptorHeap, UINT numRenderTargets)
 		{
-			context->heap.Init(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, numRenderTargets);
+			DescriptorHeap::Init(descriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, numRenderTargets);
 			context->renderTargets.resize(numRenderTargets);
 		}
 
-		void Init(_Context* context, UINT numRenderTargets, Long2 size, DXGI_FORMAT format)
+		void Init(_Context* context, DescriptorHeap::_Context* descriptorHeap, UINT numRenderTargets, Long2 size, DXGI_FORMAT format)
 		{
-			Init(context, numRenderTargets);
+			Init(context, descriptorHeap, numRenderTargets);
 			for (UINT i = 0; i < numRenderTargets; i++) {
 				context->renderTargets[i].Init(size, format);
 			}
 		}
 
-		void PlaceTargets(_Context* context)
+		void PlaceTargets(_Context* context, DescriptorHeap::_Context* descriptorHeap)
 		{
 			for (UINT i = 0; i < context->renderTargets.size(); i++) {
-				context->renderTargets[i].Place(context->heap.GetContext(), i);
+				context->renderTargets[i].Place(descriptorHeap, i);
 			}
-			SetFrameIndex(context, 0);
+			SetFrameIndex(context, descriptorHeap, 0);
 		}
 
-		void SetFrameIndex(_Context* context, UINT frameIndex)
+		void SetFrameIndex(_Context* context, DescriptorHeap::_Context* descriptorHeap, UINT frameIndex)
 		{
 			context->frameIndex = frameIndex;
-			context->currentHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(context->heap.GetContext()->heap->GetCPUDescriptorHandleForHeapStart()
-				, frameIndex, context->heap.GetContext()->handleIncrementSize);
+			context->currentHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->heap->GetCPUDescriptorHandleForHeapStart()
+				, frameIndex, descriptorHeap->handleIncrementSize);
 		}
 
-		void NextFrame(_Context* context)
+		void NextFrame(_Context* context, DescriptorHeap::_Context* descriptorHeap)
 		{
-			SetFrameIndex(context, (context->frameIndex + 1) % context->renderTargets.size());
+			SetFrameIndex(context, descriptorHeap, (context->frameIndex + 1) % context->renderTargets.size());
 		}
 
 		void SetCurrent(_Context* context, ID3D12GraphicsCommandList* cmdList)
@@ -99,37 +94,32 @@ namespace TR::Graphics {
 
 	void _RenderTargetHeap::Init(UINT numRenderTargets)
 	{
-		RenderTargetHeap::Init(&context, numRenderTargets);
+		RenderTargetHeap::Init(&rtHeap, &descriptorHeap, numRenderTargets);
 	}
 
 	void _RenderTargetHeap::Init(UINT numRenderTargets, Long2 size, DXGI_FORMAT format)
 	{
-		RenderTargetHeap::Init(&context, numRenderTargets, size, format);
+		RenderTargetHeap::Init(&rtHeap, &descriptorHeap, numRenderTargets, size, format);
 	}
 
 	void _RenderTargetHeap::PlaceTargets()
 	{
-		RenderTargetHeap::PlaceTargets(&context);
+		RenderTargetHeap::PlaceTargets(&rtHeap, &descriptorHeap);
 	}
 
 	void _RenderTargetHeap::SetFrameIndex(UINT frameIndex)
 	{
-		RenderTargetHeap::SetFrameIndex(&context, frameIndex);
+		RenderTargetHeap::SetFrameIndex(&rtHeap, &descriptorHeap, frameIndex);
 	}
 
 	void _RenderTargetHeap::SetCurrent(ID3D12GraphicsCommandList* cmdList)
 	{
-		RenderTargetHeap::SetCurrent(&context, cmdList);
+		RenderTargetHeap::SetCurrent(&rtHeap, cmdList);
 	}
 
 	void _RenderTargetHeap::ClearCurrent(ID3D12GraphicsCommandList* cmdList, Float4 color)
 	{
-		RenderTargetHeap::ClearCurrent(&context, cmdList, color);
-	}
-
-	RenderTargetHeap::_Context* _RenderTargetHeap::GetContext() noexcept
-	{
-		return &context;
+		RenderTargetHeap::ClearCurrent(&rtHeap, cmdList, color);
 	}
 
 }
