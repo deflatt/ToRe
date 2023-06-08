@@ -31,9 +31,9 @@ namespace TR::Graphics {
 				sourceHandler(output);
 		}
 
-		void LoadRaw(_Context* context, std::string path)
+		void LoadRaw(_Context* shader, std::string path)
 		{
-			LoadFile(path, context->data);
+			LoadFile(path, shader->data);
 		}
 
 		struct IncludeHandler : public IDxcIncludeHandler {
@@ -67,7 +67,7 @@ namespace TR::Graphics {
 			}
 		};
 
-		void Compile(_Context* context, std::string path, _Compiler compiler)
+		void Compile(_Context* shader, std::string path, _Compiler compiler)
 		{
 			HRESULT ret;
 
@@ -137,37 +137,32 @@ namespace TR::Graphics {
 				throw E_FailedCompilation(ret);
 			}
 
-			context->data.resize(resultBlob->GetBufferSize());
-			memcpy(&context->data[0], resultBlob->GetBufferPointer(), resultBlob->GetBufferSize());
+			shader->data.resize(resultBlob->GetBufferSize());
+			memcpy(&shader->data[0], resultBlob->GetBufferPointer(), resultBlob->GetBufferSize());
 
 			std::filesystem::current_path(oldPath);
 		}
 
-		D3D12_SHADER_BYTECODE GetBytecode(_Context* context)
+		D3D12_SHADER_BYTECODE GetBytecode(_Context* shader)
 		{
-			return { &context->data[0], context->data.size() };
+			return { &shader->data[0], shader->data.size() };
 		}
 
 	}
 
 	void _Shader::LoadRaw(std::string path)
 	{
-		Shader::LoadRaw(&context, path);
+		Shader::LoadRaw(&shader, path);
 	}
 
 	void _Shader::Compile(std::string path)
 	{
-		Shader::Compile(&context, path, compiler);
-	}
-
-	Shader::_Context* _Shader::GetContext() noexcept
-	{
-		return &context;
+		Shader::Compile(&shader, path, compiler);
 	}
 
 	_Shader::operator D3D12_SHADER_BYTECODE() noexcept
 	{
-		return Shader::GetBytecode(&context);
+		return Shader::GetBytecode(&shader);
 	}
 
 }

@@ -36,19 +36,19 @@ export namespace TR::Graphics {
 			HANDLE fenceEvent = nullptr;
 		};
 
-		void Init(_Context* context);
+		void Init(_Context* cmdAllocator);
 
-		void Signal(_Context* context, ID3D12CommandQueue* cmdQueue);
-		void Wait(_Context* context);
-		void Reset(_Context* context);
+		void Signal(_Context* cmdAllocator, ID3D12CommandQueue* cmdQueue);
+		void Wait(_Context* cmdAllocator);
+		void Reset(_Context* cmdAllocator);
 
-		void Release(_Context* context);
+		void Release(_Context* cmdAllocator);
 
 	}
 
 	struct _CommandAllocator {
 
-		CommandAllocator::_Context context = {};
+		CommandAllocator::_Context cmdAllocator = {};
 
 		void Init();
 

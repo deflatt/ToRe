@@ -26,7 +26,7 @@ int main() {
 		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, { 1280, 720 });
 	
 		Graphics::_WinGraphics graphics = {};
-		graphics.Init(window.context.hwnd, { 1280, 720 });
+		graphics.Init(window.window.hwnd, { 1280, 720 });
 		
 		
 

@@ -33,19 +33,19 @@ export namespace TR::Graphics {
 			ComPtr<IDXGISwapChain3> swapChain = {};
 		};
 
-		void Init(_Context* context, ID3D12CommandQueue* cmdQueue, HWND hwnd, Long2 size
+		void Init(_Context* swapChain, ID3D12CommandQueue* cmdQueue, HWND hwnd, Long2 size
 			, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM, UINT numBuffers = 2, bool fullscreen = false);
 
-		void InitBuffer(_Context* context, Resource::_Context* resource, UINT index);
-		void SwapBuffers(_Context* context);
+		void InitBuffer(_Context* swapChain, Resource::_Context* resource, UINT index);
+		void SwapBuffers(_Context* swapChain);
 
-		void Release(_Context* context);
+		void Release(_Context* swapChain);
 
 	}
 
 	struct _SwapChain {
 
-		SwapChain::_Context context = {};
+		SwapChain::_Context swapChain = {};
 
 		void Init(ID3D12CommandQueue* cmdQueue, HWND hwnd, Long2 size
 			, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM, UINT numBuffers = 2, bool fullscreen = false);

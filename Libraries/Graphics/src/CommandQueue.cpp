@@ -8,41 +8,41 @@ namespace TR::Graphics {
 
 	namespace CommandQueue {
 
-		void Init(_Context* context)
+		void Init(_Context* cmdQueue)
 		{
 			D3D12_COMMAND_QUEUE_DESC desc = {};
-			HRESULT ret = device->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), &context->cmdQueue);
+			HRESULT ret = device->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), &cmdQueue->cmdQueue);
 			if (ret != 0) {
 				throw E_FailedCommandQueueCreation(ret);
 			}
 		}
 
-		void Execute(_Context* context, ID3D12CommandList* const* lists, UINT numLists)
+		void Execute(_Context* cmdQueue, ID3D12CommandList* const* lists, UINT numLists)
 		{
-			context->cmdQueue->ExecuteCommandLists(numLists, lists);
+			cmdQueue->cmdQueue->ExecuteCommandLists(numLists, lists);
 		}
 
-		void Execute(_Context* context, ID3D12CommandList* list)
+		void Execute(_Context* cmdQueue, ID3D12CommandList* list)
 		{
 			ID3D12CommandList* cmdLists[1] = { list };
-			Execute(context, cmdLists, 1);
+			Execute(cmdQueue, cmdLists, 1);
 		}
 
 	}
 
 	void _CommandQueue::Init()
 	{
-		CommandQueue::Init(&context);
+		CommandQueue::Init(&cmdQueue);
 	}
 
 	void _CommandQueue::Execute(ID3D12CommandList* const* lists, UINT numLists)
 	{
-		CommandQueue::Execute(&context, lists, numLists);
+		CommandQueue::Execute(&cmdQueue, lists, numLists);
 	}
 
 	void _CommandQueue::Execute(ID3D12CommandList* list)
 	{
-		CommandQueue::Execute(&context, list);
+		CommandQueue::Execute(&cmdQueue, list);
 	}
 
 }

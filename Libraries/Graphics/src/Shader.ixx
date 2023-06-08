@@ -48,8 +48,8 @@ export namespace TR::Graphics {
 			Procedure<std::string&> sourceHandler = {};
 		};
 
-		void LoadRaw(_Context* context, std::string path);
-		void Compile(_Context* context, std::string path, _Compiler compiler);
+		void LoadRaw(_Context* shader, std::string path);
+		void Compile(_Context* shader, std::string path, _Compiler compiler);
 
 		_NODISCARD D3D12_SHADER_BYTECODE GetBytecode(_Context* context);
 
@@ -57,18 +57,14 @@ export namespace TR::Graphics {
 
 	struct _Shader {
 
+		Shader::_Context shader = {};
+
 		void LoadRaw(std::string path);
 		void Compile(std::string path);
 
 		Shader::_Compiler compiler = {};
 
-		_NODISCARD Shader::_Context* GetContext() noexcept;
-
 		operator D3D12_SHADER_BYTECODE() noexcept;
-
-	protected:
-
-		Shader::_Context context = {};
 
 	};
 

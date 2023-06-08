@@ -12,22 +12,22 @@ namespace TR::Graphics {
 
 		namespace Element {
 
-			void Init(_Context* context, std::string name, DXGI_FORMAT format)
+			void Init(_Context* element, std::string name, DXGI_FORMAT format)
 			{
-				context->name = name;
-				context->format = format;
+				element->name = name;
+				element->format = format;
 			}
 
 		}
 
-		void Init(_Context* context, std::vector<Element::_Context> elements)
+		void Init(_Context* vertexLayout, std::vector<Element::_Context> elements)
 		{
-			context->elements = elements;
+			vertexLayout->elements = elements;
 		}
 
-		void CreateDesc(_Context* context)
+		void CreateDesc(_Context* vertexLayout)
 		{
-			auto& [elements, elementDescs, layoutDesc] = *context;
+			auto& [elements, elementDescs, layoutDesc] = *vertexLayout;
 
 			layoutDesc.NumElements = (UINT)elements.size();
 			elementDescs.resize(elements.size());
@@ -48,19 +48,12 @@ namespace TR::Graphics {
 
 	void _VertexLayout::Init(std::vector<VertexLayout::Element::_Context> elements)
 	{
-		VertexLayout::Init(&context, elements);
+		VertexLayout::Init(&vertexLayout, elements);
 	}
 
 	void _VertexLayout::CreateDesc()
 	{
-		VertexLayout::CreateDesc(&context);
+		VertexLayout::CreateDesc(&vertexLayout);
 	}
-
-	VertexLayout::_Context* _VertexLayout::GetContext() noexcept
-	{
-		return &context;
-	}
-
-
 
 }

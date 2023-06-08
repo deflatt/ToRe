@@ -30,15 +30,15 @@ export namespace TR::Windows {
 		};
 
 		void CreateClass(std::string className, UINT classStyles, WNDPROC proc = Input::WindowProc);
-		void SetClass(_Context* context, std::string className);
-		void CreateClass(_Context* context, std::string className, UINT classStyles, WNDPROC proc = Input::WindowProc);
-		void CreateWindow(_Context* context, std::string title, DWORD styles, DWORD exStyles, Int2 position, Int2 size); // Add support for parent, menu, lpParam
+		void SetClass(_Context* window, std::string className);
+		void CreateClass(_Context* window, std::string className, UINT classStyles, WNDPROC proc = Input::WindowProc);
+		void CreateWindow(_Context* window, std::string title, DWORD styles, DWORD exStyles, Int2 position, Int2 size); // Add support for parent, menu, lpParam
 		
-		void HandleMessages(_Context* context);
+		void HandleMessages(_Context* window);
 
-		void CloseWindow(_Context* context);
+		void CloseWindow(_Context* window);
 
-		void Release(_Context* context);
+		void Release(_Context* window);
 
 		// TODO: add quality of life functions like Show(), Hide(), Resize()
 
@@ -46,7 +46,7 @@ export namespace TR::Windows {
 
 	export struct _Window {
 
-		Window::_Context context = {};
+		Window::_Context window = {};
 
 		void SetClass(std::string className);
 		void CreateClass(std::string className, UINT classStyles, WNDPROC proc = Input::WindowProc);

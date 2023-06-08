@@ -18,15 +18,15 @@ export namespace TR::Graphics {
 			ComPtr<ID3D12CommandQueue> cmdQueue = {};
 		};
 
-		void Init(_Context* context);
-		void Execute(_Context* context, ID3D12CommandList* const* lists, UINT numLists);
-		void Execute(_Context* context, ID3D12CommandList* list);
+		void Init(_Context* cmdQueue);
+		void Execute(_Context* cmdQueue, ID3D12CommandList* const* lists, UINT numLists);
+		void Execute(_Context* cmdQueue, ID3D12CommandList* list);
 
 	}
 
 	struct _CommandQueue  {
 
-		CommandQueue::_Context context = {};
+		CommandQueue::_Context cmdQueue = {};
 
 		void Init();
 		void Execute(ID3D12CommandList* const* lists, UINT numLists);

@@ -8,40 +8,40 @@ namespace TR::Graphics {
 
 	namespace CommandList {
 
-		void Init(_Context* context, ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators)
+		void Init(_Context* cmdList, ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators)
 		{
-			context->numParallel = numParallel;
-			context->numAllocators = numAllocators;
+			cmdList->numParallel = numParallel;
+			cmdList->numAllocators = numAllocators;
 
-			context->allocators.resize(numAllocators);
+			cmdList->allocators.resize(numAllocators);
 			for (UINT i = 0; i < numAllocators; i++) {
-				context->allocators[i].resize(numParallel);
+				cmdList->allocators[i].resize(numParallel);
 				for (UINT j = 0; j < numParallel; j++)
-					context->allocators[i][j].Init();
+					cmdList->allocators[i][j].Init();
 			}
 
 			HRESULT ret = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT
-				, context->allocators[0][0].context.cmdAllocator.Get(), nullptr
-				, __uuidof(ID3D12GraphicsCommandList), &context->cmdList);
+				, cmdList->allocators[0][0].cmdAllocator.cmdAllocator.Get(), nullptr
+				, __uuidof(ID3D12GraphicsCommandList), &cmdList->cmdList);
 			if (ret != 0) {
 				throw E_FailedCommandListCreation(ret);
 			}
 		}
 
-		void Reset(_Context* context, UINT allocator, UINT index)
+		void Reset(_Context* cmdList, UINT allocator, UINT index)
 		{
-			context->allocators[allocator][index].Reset();
+			cmdList->allocators[allocator][index].Reset();
 
-			HRESULT ret = context->cmdList->Reset(context->allocators[allocator][index]
-				.context.cmdAllocator.Get(), nullptr);
+			HRESULT ret = cmdList->cmdList->Reset(cmdList->allocators[allocator][index]
+				.cmdAllocator.cmdAllocator.Get(), nullptr);
 			if (ret != 0) {
 				throw E_FailedCommandListReset(ret);
 			}
 		}
 
-		void Close(_Context* context)
+		void Close(_Context* cmdList)
 		{
-			HRESULT ret = context->cmdList->Close();
+			HRESULT ret = cmdList->cmdList->Close();
 			if (ret != 0) {
 				throw E_FailedCommandListClosure(ret);
 			}
@@ -51,17 +51,17 @@ namespace TR::Graphics {
 
 	void _CommandList::Init(ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators)
 	{
-		CommandList::Init(&context, cmdQueue, numParallel, numAllocators);
+		CommandList::Init(&cmdList, cmdQueue, numParallel, numAllocators);
 	}
 
 	void _CommandList::Reset(UINT allocator, UINT index)
 	{
-		CommandList::Reset(&context, allocator, index);
+		CommandList::Reset(&cmdList, allocator, index);
 	}
 
 	void _CommandList::Close()
 	{
-		CommandList::Close(&context);
+		CommandList::Close(&cmdList);
 	}
 
 }

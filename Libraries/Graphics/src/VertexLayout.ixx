@@ -15,7 +15,7 @@ export namespace TR::Graphics {
 				DXGI_FORMAT format = {};
 			};
 
-			void Init(_Context* context, std::string name, DXGI_FORMAT format);
+			void Init(_Context* element, std::string name, DXGI_FORMAT format);
 
 		}
 
@@ -25,22 +25,18 @@ export namespace TR::Graphics {
 			D3D12_INPUT_LAYOUT_DESC layoutDesc = {};
 		};
 
-		void Init(_Context* context, std::vector<Element::_Context> elements);
+		void Init(_Context* vertexLayout, std::vector<Element::_Context> elements);
 
-		void CreateDesc(_Context* context);
+		void CreateDesc(_Context* vertexLayout);
 
 	}
 
 	struct _VertexLayout {
 
+		VertexLayout::_Context vertexLayout = {};
+
 		void Init(std::vector<VertexLayout::Element::_Context> elements);
 		void CreateDesc();
-
-		_NODISCARD VertexLayout::_Context* GetContext() noexcept;
-
-	protected:
-
-		VertexLayout::_Context context = {};
 
 	};
 

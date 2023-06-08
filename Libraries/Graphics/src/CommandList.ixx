@@ -29,16 +29,16 @@ export namespace TR::Graphics {
 			ComPtr<ID3D12GraphicsCommandList> cmdList = {};
 		};
 
-		void Init(_Context* context, ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators);
+		void Init(_Context* cmdList, ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators);
 
-		void Reset(_Context* context, UINT allocator, UINT index);
-		void Close(_Context* context);
+		void Reset(_Context* cmdList, UINT allocator, UINT index);
+		void Close(_Context* cmdList);
 
 	}
 
 	struct _CommandList {
 
-		CommandList::_Context context = {};
+		CommandList::_Context cmdList = {};
 
 		void Init(ID3D12CommandQueue* cmdQueue, UINT numParallel, UINT numAllocators);
 
