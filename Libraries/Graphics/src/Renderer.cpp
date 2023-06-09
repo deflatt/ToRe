@@ -12,13 +12,8 @@ namespace TR::Graphics {
 		{
 			HRESULT ret;
 
-			std::vector<D3D12_ROOT_PARAMETER> rootParameters(context->inputParameters.size());
-			for (UINT i = 0; i < context->inputParameters.size(); i++) {
-				rootParameters[i] = context->inputParameters[i].parameter;
-			}
-
 			CD3DX12_ROOT_SIGNATURE_DESC rootDesc = {};
-			rootDesc.Init((UINT)rootParameters.size(), &rootParameters[0], (UINT)context->staticSamplers.size()
+			rootDesc.Init((UINT)context->rootParameters.size(), &context->rootParameters[0], (UINT)context->staticSamplers.size()
 				, &context->staticSamplers[0], D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 			ComPtr<ID3DBlob> signatureBlob = {};

@@ -10,65 +10,44 @@ namespace TR::Graphics {
 
 	namespace InputParameter {
 
-		void InitConstant(_Context* inputParameter, UINT shaderRegister, UINT num32BitValues)
+		void Init(_Constant* constant, UINT shaderRegister, UINT num32BitValues)
 		{
-			auto& [parameter, ranges] = *inputParameter;
-			parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-			parameter.Constants.ShaderRegister = shaderRegister;
-			parameter.Constants.RegisterSpace = 0;
-			parameter.Constants.Num32BitValues = num32BitValues;
+			constant->shaderRegister = shaderRegister;
+			constant->num32BitValues = num32BitValues;
+			constant->rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+			constant->rootParameter.Constants.ShaderRegister = constant->shaderRegister;
+			constant->rootParameter.Constants.RegisterSpace = 0;
+			constant->rootParameter.Constants.Num32BitValues = constant->num32BitValues;
 		}
 
-		void InitConstantBuffer(_Context* inputParameter, UINT shaderRegister)
+		void Init(_ConstantResource* constantResource, UINT shaderRegister)
 		{
-			auto& [parameter, ranges] = *inputParameter;
-			parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-			parameter.Constants.ShaderRegister = shaderRegister;
-			parameter.Constants.RegisterSpace = 0;
+			constantResource->shaderRegister = shaderRegister;
+			constantResource->rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+			constantResource->rootParameter.Descriptor.ShaderRegister = constantResource->shaderRegister;
+			constantResource->rootParameter.Descriptor.RegisterSpace = 0;
 		}
 
-		void InitConstantBuffer(_TableParameter* tableParameter, UINT shaderRegister)
+		void Init(_ArrayResource* arrayResource, UINT shaderRegister)
 		{
-			tableParameter->rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-			tableParameter->shaderRegister = shaderRegister;
+			arrayResource->shaderRegister = shaderRegister;
+			arrayResource->rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+			arrayResource->rootParameter.Descriptor.ShaderRegister = arrayResource->shaderRegister;
+			arrayResource->rootParameter.Descriptor.RegisterSpace = 0;
 		}
 
-		void InitArrayBuffer(_Context* inputParameter, UINT shaderRegister)
+		void Init(_RWArrayResource* rwArrayResource, UINT shaderRegister)
 		{
-			auto& [parameter, ranges] = *inputParameter;
-			parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-			parameter.Constants.ShaderRegister = shaderRegister;
-			parameter.Constants.RegisterSpace = 0;
+			rwArrayResource->shaderRegister = shaderRegister;
+			rwArrayResource->rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
+			rwArrayResource->rootParameter.Descriptor.ShaderRegister = rwArrayResource->shaderRegister;
+			rwArrayResource->rootParameter.Descriptor.RegisterSpace = 0;
 		}
 
-		void InitArrayBuffer(_TableParameter* tableParameter, UINT shaderRegister)
+		void Init(_Table* table, std::vector<_TableParameter> parameters)
 		{
-			tableParameter->rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-			tableParameter->shaderRegister = shaderRegister;
-		}
-
-		void InitRWArrayBuffer(_Context* inputParameter, UINT shaderRegister)
-		{
-			auto& [parameter, ranges] = *inputParameter;
-			parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-			parameter.Constants.ShaderRegister = shaderRegister;
-			parameter.Constants.RegisterSpace = 0;
-		}
-
-		void InitRWArrayBuffer(_TableParameter* tableParameter, UINT shaderRegister)
-		{
-			tableParameter->rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-			tableParameter->shaderRegister = shaderRegister;
-		}
-
-		void InitParameterTable(_Context* inputParameter, std::vector<_TableParameter> parameters)
-		{
-			auto& [parameter, ranges] = *inputParameter;
-			
-			// Not perfect distribution but whatever
-			parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 			for (UINT i = 0; i < parameters.size(); i++) {
-				if (i == 0 || !(parameters[i].rangeType == parameters[i - 1].rangeType
+				if (table->ranges.size() == 0 || !(parameters[i].rangeType == parameters[i - 1].rangeType
 					&& parameters[i].shaderRegister == (parameters[i - 1].shaderRegister + 1))) {
 
 					D3D12_DESCRIPTOR_RANGE range = {};
@@ -77,74 +56,74 @@ namespace TR::Graphics {
 					range.OffsetInDescriptorsFromTableStart = 0;
 					range.RangeType = parameters[i].rangeType;
 
-					ranges.push_back(range);
-					parameter.DescriptorTable.NumDescriptorRanges++;
+					table->ranges.push_back(range);
 				}
 				else {
-					ranges.back().NumDescriptors++;
+					table->ranges.back().NumDescriptors++;
 				}
 			}
-			
+			table->rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			table->rootParameter.DescriptorTable.NumDescriptorRanges = table->ranges.size();
+			table->rootParameter.DescriptorTable.pDescriptorRanges = &table->ranges[0];
+		}
+
+		void SetParameter(_ConstantResource* constantResource, ID3D12GraphicsCommandList* cmdList, UINT index)
+		{ cmdList->SetGraphicsRootConstantBufferView(index, constantResource->gpuAddress); }
+
+		void SetParameter(_ArrayResource* arrayResource, ID3D12GraphicsCommandList* cmdList, UINT index)
+		{ cmdList->SetGraphicsRootShaderResourceView(index, arrayResource->gpuAddress); }
+
+		void SetParameter(_RWArrayResource* rwArrayResource, ID3D12GraphicsCommandList* cmdList, UINT index)
+		{ cmdList->SetGraphicsRootUnorderedAccessView(index, rwArrayResource->gpuAddress); }
+
+		void SetParameter(_Table* table, ID3D12GraphicsCommandList* cmdList, UINT index)
+		{
+			ID3D12DescriptorHeap* heaps[1] = { table->descriptorHeap->heap.Get() };
+			cmdList->SetDescriptorHeaps(1, heaps);
+			cmdList->SetGraphicsRootDescriptorTable(index, table->descriptorHeap->heap->GetGPUDescriptorHandleForHeapStart());
+		}
+
+		namespace Map {
+
+			void FillParameters(_Context* map, std::vector<D3D12_ROOT_PARAMETER>* rootParameters)
+			{
+				//for (auto& constant : map->constants)
+				//	rootParameters->push_back(constant.second.rootParameter);
+				for (auto& constantResource : map->constantResources)
+					rootParameters->push_back(constantResource.second.rootParameter);
+				for (auto& arrayResource : map->arrayResources)
+					rootParameters->push_back(arrayResource.second.rootParameter);
+				for (auto& rwArrayResource : map->rwArrayResources)
+					rootParameters->push_back(rwArrayResource.second.rootParameter);
+				for (auto& table : map->tables)
+					rootParameters->push_back(table.second.rootParameter);
+			}
+
+			void SetParameters(_Context* map, ID3D12GraphicsCommandList* cmdList)
+			{
+				UINT index = 0;
+				for (auto& constantResource : map->constantResources)
+					SetParameter(&constantResource.second, cmdList, index++);
+				for (auto& arrayResource : map->arrayResources)
+					SetParameter(&arrayResource.second, cmdList, index++);
+				for (auto& rwArrayResource : map->rwArrayResources)
+					SetParameter(&rwArrayResource.second, cmdList, index++);
+				for (auto& table : map->tables)
+					SetParameter(&table.second, cmdList, index++);
+			}
+
 		}
 
 	}
 
-	_TableParameter& _TableParameter::ConstantBuffer(UINT shaderRegister)
+	void _InputParameterMap::FillParameters(std::vector<D3D12_ROOT_PARAMETER>* rootParameters)
 	{
-		InputParameter::InitConstantBuffer(&tableParameter, shaderRegister);
-		return *this;
+		InputParameter::Map::FillParameters(&map, rootParameters);
 	}
 
-	_TableParameter& _TableParameter::ArrayBuffer(UINT shaderRegister)
+	void _InputParameterMap::SetParameters(ID3D12GraphicsCommandList* cmdList)
 	{
-		InputParameter::InitArrayBuffer(&tableParameter, shaderRegister);
-		return *this;
-	}
-
-	_TableParameter& _TableParameter::RWArrayBuffer(UINT shaderRegister)
-	{
-		InputParameter::InitRWArrayBuffer(&tableParameter, shaderRegister);
-		return *this;
-	}
-
-	_TableParameter::operator InputParameter::_TableParameter() noexcept
-	{
-		return tableParameter;
-	}
-
-	_InputParameter& _InputParameter::Constant(UINT shaderRegister, UINT num32BitValues)
-	{
-		InputParameter::InitConstant(&inputParameter, shaderRegister, num32BitValues);
-		return *this;
-	}
-
-	_InputParameter& _InputParameter::ConstantBuffer(UINT shaderRegister)
-	{
-		InputParameter::InitConstantBuffer(&inputParameter, shaderRegister);
-		return *this;
-	}
-
-	_InputParameter& _InputParameter::ArrayBuffer(UINT shaderRegister)
-	{
-		InputParameter::InitArrayBuffer(&inputParameter, shaderRegister);
-		return *this;
-	}
-
-	_InputParameter& _InputParameter::RWArrayBuffer(UINT shaderRegister)
-	{
-		InputParameter::InitRWArrayBuffer(&inputParameter, shaderRegister);
-		return *this;
-	}
-
-	_InputParameter& _InputParameter::ParameterTable(std::vector<InputParameter::_TableParameter> parameters)
-	{
-		InputParameter::InitParameterTable(&inputParameter, parameters);
-		return *this;
-	}
-
-	_InputParameter::operator D3D12_ROOT_PARAMETER() noexcept
-	{
-		return inputParameter.parameter;
+		InputParameter::Map::SetParameters(&map, cmdList);
 	}
 
 }

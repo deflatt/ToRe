@@ -15,7 +15,7 @@
     <FxCompile Include="src\TestVS.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
-    <FxCompile Include="TestPS.hlsl">
+    <FxCompile Include="src\TestPS.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>

@@ -10,6 +10,7 @@ import TR.Graphics.ConstantResource;
 import TR.Graphics.ArrayResource;
 import TR.Graphics.Shader;
 import TR.Graphics.Renderer;
+import TR.Graphics.VertexBuffer;
 
 using namespace TR;
 
@@ -28,8 +29,34 @@ int main() {
 		Graphics::_WinGraphics graphics = {};
 		graphics.Init(window.window.hwnd, { 1280, 720 });
 		
+		Graphics::Renderer::_Context renderer = {};
 		
+		Graphics::_Shader vertexShader = {};
+		vertexShader.compiler.profile = "vs_6_0";
+		vertexShader.Compile("TestVS.hlsl");
+		
+		Graphics::_Shader pixelShader = {};
+		pixelShader.compiler.profile = "ps_6_0";
+		pixelShader.Compile("TestPS.hlsl");
 
+		renderer.shaderSet.vertex = vertexShader;
+		renderer.shaderSet.pixel = pixelShader;
+
+		Graphics::_VertexLayout vertexLayout = {};
+		vertexLayout.Init({
+			{ "POSITION", DXGI_FORMAT_R32G32_FLOAT }
+			});
+		vertexLayout.CreateDesc();
+
+		renderer.vertexLayout = vertexLayout.vertexLayout;
+		Graphics::Renderer::Init(&renderer);
+
+		Graphics::_VertexBuffer vertexBuffer = {};
+		vertexBuffer.Init(3, sizeof(Float2));
+		std::vector<Float2> vertices = {
+			{ 0.0f, 0.5f }, { -0.5f, 0.5f }, { -0.5f, -0.5f }
+		};
+		vertexBuffer.Upload(&vertices[0], graphics.graphics.cmdList.cmdList.cmdList.Get());
 
 		float angle = 0.0f;
 		while (true) {
@@ -38,6 +65,8 @@ int main() {
 			angle += 0.002f;
 
 			graphics.Clear({ (sinf(angle) + 1.0f) / 2.0f, 0.0f, (-sinf(angle) + 1.0f) / 2.0f, 1.0f});
+
+			
 
 			graphics.Render();
 		}
