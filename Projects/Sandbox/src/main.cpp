@@ -12,6 +12,9 @@ import TR.Graphics.Shader;
 import TR.Graphics.Renderer;
 import TR.Graphics.VertexBuffer;
 import TR.Graphics.RWArrayResource;
+import TR.Windows.MouseListener;
+import TR.Windows.RawMouseListener;
+import TR.Windows.RawKeyboardListener;
 
 using namespace TR;
 
@@ -33,6 +36,23 @@ int main() {
 		graphics.Init(window.window.hwnd, (Long2)windowSize);
 		auto cmdList = graphics.graphics.cmdList.cmdList.cmdList.Get();
 		
+		Windows::Input::RawKeyboardListener::Register(window.window.hwnd);
+		Windows::Input::listeners.Insert(&Windows::Input::rawKeyboardListener);
+
+		Procedure<Windows::Input::_RawKeydownEvent*> keydownHandler = [](Windows::Input::_RawKeydownEvent* e) {
+			std::cout << "Key " << e->key << " pressed" << std::endl;
+		};
+		Windows::Input::listeners.Insert(&keydownHandler);
+
+		Windows::Input::RawMouseListener::Register(window.window.hwnd);
+		Windows::Input::listeners.Insert(&Windows::Input::rawMouseListener);
+
+		Procedure<Windows::Input::_RawMouseMoveEvent*> mouseMoveHandler = [](Windows::Input::_RawMouseMoveEvent* e) {
+			std::cout << "MouseMove: " << e->movement.ToString() << std::endl;
+		};
+		Windows::Input::listeners.Insert(&mouseMoveHandler);
+
+
 		Graphics::_Renderer renderer = {};
 		
 		Graphics::_Shader vertexShader = {};

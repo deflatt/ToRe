@@ -34,5 +34,23 @@
     <ClCompile Include="src\KeyboardListener.cpp">
       <Filter>Source Files\Input\Listeners</Filter>
     </ClCompile>
+    <ClCompile Include="src\MouseListener.ixx">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MouseListener.cpp">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RawMouseListener.ixx">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RawMouseListener.cpp">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RawKeyboardListener.ixx">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RawKeyboardListener.cpp">
+      <Filter>Source Files\Input\Listeners</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -16,6 +16,12 @@
     <ClCompile Include="src\Input.ixx" />
     <ClCompile Include="src\KeyboardListener.cpp" />
     <ClCompile Include="src\KeyboardListener.ixx" />
+    <ClCompile Include="src\MouseListener.cpp" />
+    <ClCompile Include="src\MouseListener.ixx" />
+    <ClCompile Include="src\RawKeyboardListener.cpp" />
+    <ClCompile Include="src\RawKeyboardListener.ixx" />
+    <ClCompile Include="src\RawMouseListener.cpp" />
+    <ClCompile Include="src\RawMouseListener.ixx" />
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="src\Window.ixx" />
   </ItemGroup>
