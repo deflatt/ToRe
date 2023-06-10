@@ -91,14 +91,21 @@ namespace TR::Graphics {
 
 				//for (auto& constant : map->constants)
 				//	map->rootParameters.push_back(constant.second.rootParameter);
-				for (auto& constantResource : map->constantResources)
+				for (auto& constantResource : map->constantResources) {
+					Init(&constantResource.second, constantResource.second.shaderRegister);
 					map->rootParameters.push_back(constantResource.second.rootParameter);
-				for (auto& arrayResource : map->arrayResources)
+				}
+				for (auto& arrayResource : map->arrayResources) {
+					Init(&arrayResource.second, arrayResource.second.shaderRegister);
 					map->rootParameters.push_back(arrayResource.second.rootParameter);
-				for (auto& rwArrayResource : map->rwArrayResources)
+				}
+				for (auto& rwArrayResource : map->rwArrayResources) {
+					Init(&rwArrayResource.second, rwArrayResource.second.shaderRegister);
 					map->rootParameters.push_back(rwArrayResource.second.rootParameter);
-				for (auto& table : map->tables)
+				}
+				for (auto& table : map->tables) {
 					map->rootParameters.push_back(table.second.rootParameter);
+				}
 
 				CD3DX12_ROOT_SIGNATURE_DESC rootDesc = {};
 				rootDesc.Init((UINT)map->rootParameters.size(), &map->rootParameters[0], (UINT)map->staticSamplers.size()

@@ -11,6 +11,7 @@ import TR.Graphics.ArrayResource;
 import TR.Graphics.Shader;
 import TR.Graphics.Renderer;
 import TR.Graphics.VertexBuffer;
+import TR.Graphics.RWArrayResource;
 
 using namespace TR;
 
@@ -55,6 +56,8 @@ int main() {
 			{ "COLOR", DXGI_FORMAT_R32G32B32_FLOAT }
 		};
 		
+		renderer.inputMap.rwArrayResources["colorBuffer"].shaderRegister = 1;
+
 		renderer.Init();
 
 		Graphics::_VertexBuffer vertexBuffer = {};
@@ -63,6 +66,13 @@ int main() {
 			{ { 0.0f, 0.5f }, { 0.0f, 0.0f, 1.0f } }, { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } }, { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } }
 		};
 		vertexBuffer.Upload(&vertices[0], cmdList);
+
+		Graphics::_RWArrayBuffer colorBuffer = {};
+		colorBuffer.Init(1, sizeof(Float3));
+		Float3 color = { 0.0f, 0.0f, 1.0f };
+		colorBuffer.Upload(&color, cmdList);
+
+		renderer.inputMap.rwArrayResources["colorBuffer"].gpuAddress = colorBuffer.resource.resource->GetGPUVirtualAddress();
 
 		while (true) {
 			window.HandleMessages();

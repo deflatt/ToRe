@@ -53,11 +53,20 @@ namespace TR::Graphics {
 
 	}
 
+	namespace Renderer {
+
+		void Init(_Context* renderer, InputParameter::Map::_Context* inputMap)
+		{
+			VertexLayout::CreateDesc(&renderer->vertexLayout);
+			InputParameter::Map::Init(inputMap);
+			Renderer::Init(renderer, inputMap->rootSignature.Get());
+		}
+
+	}
+
 	void _Renderer::Init()
 	{
-		VertexLayout::CreateDesc(&renderer.vertexLayout);
-		InputParameter::Map::Init(&inputMap);
-		Renderer::Init(&renderer, inputMap.rootSignature.Get());
+		Renderer::Init(&renderer, &inputMap);
 	}
 
 	void TR::Graphics::_Renderer::Render(ID3D12GraphicsCommandList* cmdList, D3D12_VERTEX_BUFFER_VIEW vertexBuffer, D3D12_VIEWPORT viewPort, RECT scissorRect)

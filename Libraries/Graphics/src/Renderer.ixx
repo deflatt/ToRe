@@ -33,6 +33,12 @@ export namespace TR::Graphics {
 
 	}
 
+	namespace Renderer {
+
+		void Init(_Context* renderer, InputParameter::Map::_Context* inputMap);
+
+	}
+
 	struct _Renderer {
 
 		Renderer::_Context renderer = {};
