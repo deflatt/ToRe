@@ -8,50 +8,61 @@ namespace TR::Graphics {
 
 	namespace Renderer {
 
-		void Init(_Context* context)
+		void Init(_Context* renderer, ID3D12RootSignature* rootSignature)
 		{
 			HRESULT ret;
 
-			CD3DX12_ROOT_SIGNATURE_DESC rootDesc = {};
-			rootDesc.Init((UINT)context->rootParameters.size(), &context->rootParameters[0], (UINT)context->staticSamplers.size()
-				, &context->staticSamplers[0], D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-			ComPtr<ID3DBlob> signatureBlob = {};
-			ret = D3D12SerializeRootSignature(&rootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, nullptr);
-			if (ret != 0) {
-				throw E_FailedRootSignatureSerialization(ret);
-			}
-
-			ret = device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), &context->rootSignature);
-			if (ret != 0) {
-				throw E_FailedRootSignatureCreation(ret);
-			}
-
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-			desc.pRootSignature = context->rootSignature.Get();
-			desc.VS = context->shaderSet.vertex;
-			desc.PS = context->shaderSet.pixel;
-			desc.DS = context->shaderSet.domain;
-			desc.HS = context->shaderSet.hull;
-			desc.GS = context->shaderSet.geometry;
+			desc.pRootSignature = rootSignature;
+			desc.VS = renderer->shaderSet.vertex;
+			desc.PS = renderer->shaderSet.pixel;
+			desc.DS = renderer->shaderSet.domain;
+			desc.HS = renderer->shaderSet.hull;
+			desc.GS = renderer->shaderSet.geometry;
 			desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 			desc.BlendState.RenderTarget[0].BlendEnable = false; // Implement later
 			desc.SampleMask = 0xffffffff;
 			desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-			desc.InputLayout = context->vertexLayout.layoutDesc;
-			desc.PrimitiveTopologyType = context->topologyType;
+			desc.InputLayout = renderer->vertexLayout.layoutDesc;
+			desc.PrimitiveTopologyType = renderer->topologyType;
 			desc.NumRenderTargets = 1;
-			desc.RTVFormats[0] = context->renderTargetFormat;
+			desc.RTVFormats[0] = renderer->renderTargetFormat;
 			desc.SampleDesc = { 1, 0 };
 			desc.DepthStencilState.DepthEnable = false;
 			desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
 
-			ret = device->CreateGraphicsPipelineState(&desc, __uuidof(ID3D12PipelineState), &context->pipelineState);
+			ret = device->CreateGraphicsPipelineState(&desc, __uuidof(ID3D12PipelineState), &renderer->pipelineState);
 			if (ret != 0) {
 				throw E_FailedPipelineStateCreation(ret);
 			}
 		}
 
+		void Render(_Context* renderer, ID3D12GraphicsCommandList* cmdList, D3D12_VERTEX_BUFFER_VIEW vertexBuffer, InputParameter::Map::_Context* inputMap, D3D12_VIEWPORT viewPort, RECT scissorRect)
+		{
+			cmdList->SetPipelineState(renderer->pipelineState.Get());
+			if (inputMap)
+				InputParameter::Map::SetParameters(inputMap, cmdList);
+
+			cmdList->RSSetViewports(1, &viewPort);
+			cmdList->RSSetScissorRects(1, &scissorRect);
+			cmdList->IASetPrimitiveTopology(renderer->topology);
+			cmdList->IASetVertexBuffers(0, 1, &vertexBuffer);
+
+			cmdList->DrawInstanced(vertexBuffer.SizeInBytes / vertexBuffer.StrideInBytes, 1, 0, 0);
+		}
+
+	}
+
+	void _Renderer::Init()
+	{
+		VertexLayout::CreateDesc(&renderer.vertexLayout);
+		InputParameter::Map::Init(&inputMap);
+		Renderer::Init(&renderer, inputMap.rootSignature.Get());
+	}
+
+	void TR::Graphics::_Renderer::Render(ID3D12GraphicsCommandList* cmdList, D3D12_VERTEX_BUFFER_VIEW vertexBuffer, D3D12_VIEWPORT viewPort, RECT scissorRect)
+	{
+		Renderer::Render(&renderer, cmdList, vertexBuffer, &inputMap, viewPort, scissorRect);
 	}
 
 }

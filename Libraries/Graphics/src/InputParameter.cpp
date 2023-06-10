@@ -63,7 +63,7 @@ namespace TR::Graphics {
 				}
 			}
 			table->rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-			table->rootParameter.DescriptorTable.NumDescriptorRanges = table->ranges.size();
+			table->rootParameter.DescriptorTable.NumDescriptorRanges = (UINT)table->ranges.size();
 			table->rootParameter.DescriptorTable.pDescriptorRanges = &table->ranges[0];
 		}
 
@@ -85,22 +85,46 @@ namespace TR::Graphics {
 
 		namespace Map {
 
+			void Init(_Context* map)
+			{
+				HRESULT ret;
+
+				//for (auto& constant : map->constants)
+				//	map->rootParameters.push_back(constant.second.rootParameter);
+				for (auto& constantResource : map->constantResources)
+					map->rootParameters.push_back(constantResource.second.rootParameter);
+				for (auto& arrayResource : map->arrayResources)
+					map->rootParameters.push_back(arrayResource.second.rootParameter);
+				for (auto& rwArrayResource : map->rwArrayResources)
+					map->rootParameters.push_back(rwArrayResource.second.rootParameter);
+				for (auto& table : map->tables)
+					map->rootParameters.push_back(table.second.rootParameter);
+
+				CD3DX12_ROOT_SIGNATURE_DESC rootDesc = {};
+				rootDesc.Init((UINT)map->rootParameters.size(), &map->rootParameters[0], (UINT)map->staticSamplers.size()
+					, &map->staticSamplers[0], D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+				ComPtr<ID3DBlob> signatureBlob = {};
+				ret = D3D12SerializeRootSignature(&rootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, nullptr);
+				if (ret != 0) {
+					throw E_FailedRootSignatureSerialization(ret);
+				}
+
+				ret = device->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), __uuidof(ID3D12RootSignature), &map->rootSignature);
+				if (ret != 0) {
+					throw E_FailedRootSignatureCreation(ret);
+				}
+			}
+
 			void FillParameters(_Context* map, std::vector<D3D12_ROOT_PARAMETER>* rootParameters)
 			{
-				//for (auto& constant : map->constants)
-				//	rootParameters->push_back(constant.second.rootParameter);
-				for (auto& constantResource : map->constantResources)
-					rootParameters->push_back(constantResource.second.rootParameter);
-				for (auto& arrayResource : map->arrayResources)
-					rootParameters->push_back(arrayResource.second.rootParameter);
-				for (auto& rwArrayResource : map->rwArrayResources)
-					rootParameters->push_back(rwArrayResource.second.rootParameter);
-				for (auto& table : map->tables)
-					rootParameters->push_back(table.second.rootParameter);
+				
 			}
 
 			void SetParameters(_Context* map, ID3D12GraphicsCommandList* cmdList)
 			{
+				cmdList->SetGraphicsRootSignature(map->rootSignature.Get());
+
 				UINT index = 0;
 				for (auto& constantResource : map->constantResources)
 					SetParameter(&constantResource.second, cmdList, index++);
@@ -116,9 +140,9 @@ namespace TR::Graphics {
 
 	}
 
-	void _InputParameterMap::FillParameters(std::vector<D3D12_ROOT_PARAMETER>* rootParameters)
+	void _InputParameterMap::Init()
 	{
-		InputParameter::Map::FillParameters(&map, rootParameters);
+		InputParameter::Map::Init(&map);
 	}
 
 	void _InputParameterMap::SetParameters(ID3D12GraphicsCommandList* cmdList)

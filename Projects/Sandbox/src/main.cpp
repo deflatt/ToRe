@@ -20,53 +20,56 @@ int main() {
 
 		Graphics::Device::Init();
 
+		Int2 windowSize = { 1280, 720 };
+
 		Windows::Window::CreateClass("ToRe Window Class", 0);
 		Windows::_Window window = {};
 
 		window.SetClass("ToRe Window Class");
-		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, { 1280, 720 });
+		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, windowSize);
 	
 		Graphics::_WinGraphics graphics = {};
-		graphics.Init(window.window.hwnd, { 1280, 720 });
+		graphics.Init(window.window.hwnd, (Long2)windowSize);
+		auto cmdList = graphics.graphics.cmdList.cmdList.cmdList.Get();
 		
-		Graphics::Renderer::_Context renderer = {};
+		Graphics::_Renderer renderer = {};
 		
 		Graphics::_Shader vertexShader = {};
 		vertexShader.compiler.profile = "vs_6_0";
-		vertexShader.Compile("TestVS.hlsl");
+		vertexShader.Compile("src/TestVS.hlsl");
 		
 		Graphics::_Shader pixelShader = {};
 		pixelShader.compiler.profile = "ps_6_0";
-		pixelShader.Compile("TestPS.hlsl");
+		pixelShader.Compile("src/TestPS.hlsl");
 
-		renderer.shaderSet.vertex = vertexShader;
-		renderer.shaderSet.pixel = pixelShader;
+		renderer.renderer.shaderSet.vertex = vertexShader;
+		renderer.renderer.shaderSet.pixel = pixelShader;
 
-		Graphics::_VertexLayout vertexLayout = {};
-		vertexLayout.Init({
-			{ "POSITION", DXGI_FORMAT_R32G32_FLOAT }
-			});
-		vertexLayout.CreateDesc();
+		struct InputVertex {
+			Float2 position = {};
+			Float3 color = {};
+		};
 
-		renderer.vertexLayout = vertexLayout.vertexLayout;
-		Graphics::Renderer::Init(&renderer);
+		renderer.renderer.vertexLayout.elements = {
+			{ "POSITION", DXGI_FORMAT_R32G32_FLOAT },
+			{ "COLOR", DXGI_FORMAT_R32G32B32_FLOAT }
+		};
+		
+		renderer.Init();
 
 		Graphics::_VertexBuffer vertexBuffer = {};
-		vertexBuffer.Init(3, sizeof(Float2));
-		std::vector<Float2> vertices = {
-			{ 0.0f, 0.5f }, { -0.5f, 0.5f }, { -0.5f, -0.5f }
+		vertexBuffer.Init(3, sizeof(InputVertex));
+		std::vector<InputVertex> vertices = {
+			{ { 0.0f, 0.5f }, { 0.0f, 0.0f, 1.0f } }, { { 0.5f, -0.5f }, { 0.0f, 1.0f, 0.0f } }, { { -0.5f, -0.5f }, { 1.0f, 0.0f, 0.0f } }
 		};
-		vertexBuffer.Upload(&vertices[0], graphics.graphics.cmdList.cmdList.cmdList.Get());
+		vertexBuffer.Upload(&vertices[0], cmdList);
 
-		float angle = 0.0f;
 		while (true) {
 			window.HandleMessages();
-			
-			angle += 0.002f;
 
-			graphics.Clear({ (sinf(angle) + 1.0f) / 2.0f, 0.0f, (-sinf(angle) + 1.0f) / 2.0f, 1.0f});
+			graphics.Clear({});
 
-			
+			renderer.Render(cmdList, vertexBuffer.vertexBuffer.vbView, { 0.0f, 0.0f, (float)windowSize[0], (float)windowSize[1], 0.0f, 1.0f }, { 0, 0, (LONG)windowSize[0], (LONG)windowSize[1] });
 
 			graphics.Render();
 		}

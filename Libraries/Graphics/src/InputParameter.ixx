@@ -59,15 +59,27 @@ export namespace TR::Graphics {
 
 		namespace Map {
 
+			struct E_FailedRootSignatureSerialization : public _D3D12Exception {
+				E_FailedRootSignatureSerialization(HRESULT returnValue) : _D3D12Exception("Failed to serialize root signature.", returnValue) {}
+			};
+			struct E_FailedRootSignatureCreation : public _D3D12Exception {
+				E_FailedRootSignatureCreation(HRESULT returnValue) : _D3D12Exception("Failed to create root signature.", returnValue) {}
+			};
+
 			struct _Context {
 				std::unordered_map<std::string, _Constant> constants = {};
 				std::unordered_map<std::string, _ConstantResource> constantResources = {};
 				std::unordered_map<std::string, _ArrayResource> arrayResources = {};
 				std::unordered_map<std::string, _RWArrayResource> rwArrayResources = {};
 				std::unordered_map<std::string, _Table> tables = {};
+
+				std::vector<D3D12_ROOT_PARAMETER> rootParameters = {};
+				std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers = {};
+
+				ComPtr<ID3D12RootSignature> rootSignature = {};
 			};
 
-			void FillParameters(_Context* map, std::vector<D3D12_ROOT_PARAMETER>* rootParameters);
+			void Init(_Context* map);
 			void SetParameters(_Context* map, ID3D12GraphicsCommandList* cmdList);
 
 		}
@@ -78,7 +90,7 @@ export namespace TR::Graphics {
 
 		InputParameter::Map::_Context map = {};
 
-		void FillParameters(std::vector<D3D12_ROOT_PARAMETER>* rootParameters);
+		void Init();
 		void SetParameters(ID3D12GraphicsCommandList* cmdList);
 
 	};
