@@ -7,7 +7,7 @@ import <string>;
 
 namespace TR {
 
-	template <typename T, size_t length>
+	export template <typename T, size_t length>
 	struct CommonArray : public std::array<T, length> {
 		static_assert(length > 0, "Length must be greater than 0.");
 
@@ -94,44 +94,89 @@ namespace TR {
 			return result;
 		}
 
-		/* Forgive me */
-#define TR_COMMONARRAY_OPERATOR(x)														\
-		template <size_t ind = 0>														\
-		CommonArray<T, length>& operator x##=(const CommonArray<T, length>& that) {		\
-			_Elems[ind] x##= that[ind];													\
-			if constexpr (ind < length - 1)												\
-				operator##x##=<ind + 1>(that);											\
-			return *this;																\
-		}																				\
-		template <size_t ind = 0>														\
-		CommonArray<T, length>& operator##x##=(T that) {								\
-			_Elems[ind] x##= that;														\
-			if constexpr (ind < length - 1)												\
-				operator##x##=<ind + 1>(that);											\
-			return *this;																\
-		}																				\
-		CommonArray<T, length> operator x (const CommonArray<T, length>& that) const {	\
-			CommonArray<T, length> result(*this);										\
-			result x##= that;															\
-			return result;																\
-		}																				\
-		CommonArray<T, length> operator x (T that) const {								\
-			CommonArray<T, length> result(*this);										\
-			result x##= that;															\
-			return result;																\
+		CommonArray<T, length>& operator+=(const CommonArray<T, length>& that){
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] += that[i];
+			return *this;
+		}
+		CommonArray<T, length>& operator+=(const T& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] += that;
+			return *this;
+		}
+		CommonArray<T, length> operator+(const CommonArray<T, length>& that) {
+			CommonArray<T, length> result = *this;
+			result += that;
+			return result;
+		}
+		CommonArray<T, length> operator+(const T& that) {
+			CommonArray<T, length> result = *this;
+			result += that;
+			return result;
 		}
 
-		TR_COMMONARRAY_OPERATOR(+);
-		TR_COMMONARRAY_OPERATOR(-);
-		TR_COMMONARRAY_OPERATOR(*);
-		TR_COMMONARRAY_OPERATOR(/);
-		TR_COMMONARRAY_OPERATOR(%);
-		TR_COMMONARRAY_OPERATOR(<<);
-		TR_COMMONARRAY_OPERATOR(>>);
-		TR_COMMONARRAY_OPERATOR(|);
-		TR_COMMONARRAY_OPERATOR(&);
-		TR_COMMONARRAY_OPERATOR(^);
+		CommonArray<T, length>& operator-=(const CommonArray<T, length>& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] -= that[i];
+			return *this;
+		}
+		CommonArray<T, length>& operator-=(const T& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] -= that;
+			return *this;
+		}
+		CommonArray<T, length> operator-(const CommonArray<T, length>& that) {
+			CommonArray<T, length> result = *this;
+			result -= that;
+			return result;
+		}
+		CommonArray<T, length> operator-(const T& that) {
+			CommonArray<T, length> result = *this;
+			result -= that;
+			return result;
+		}
 
+		CommonArray<T, length>& operator*=(const CommonArray<T, length>& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] *= that[i];
+			return *this;
+		}
+		CommonArray<T, length>& operator*=(const T& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] *= that;
+			return *this;
+		}
+		CommonArray<T, length> operator*(const CommonArray<T, length>& that) {
+			CommonArray<T, length> result = *this;
+			result *= that;
+			return result;
+		}
+		CommonArray<T, length> operator*(const T& that) {
+			CommonArray<T, length> result = *this;
+			result *= that;
+			return result;
+		}
+
+		CommonArray<T, length>& operator/=(const CommonArray<T, length>& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] /= that[i];
+			return *this;
+		}
+		CommonArray<T, length>& operator/=(const T& that) {
+			for (size_t i = 0; i < length; i++)
+				_Elems[i] /= that;
+			return *this;
+		}
+		CommonArray<T, length> operator/(const CommonArray<T, length>& that) {
+			CommonArray<T, length> result = *this;
+			result /= that;
+			return result;
+		}
+		CommonArray<T, length> operator/(const T& that) {
+			CommonArray<T, length> result = *this;
+			result /= that;
+			return result;
+		}
 	};
 
 	export {
@@ -140,66 +185,6 @@ namespace TR {
 		struct Array : public CommonArray<T, length> {
 			using CommonArray<T, length>::CommonArray;
 			Array(const CommonArray<T, length>& that) : CommonArray<T, length>(that) {}
-
-			#define TR_ARRAY_ELEM_ALIAS(x,i)			\
-			_NODISCARD T& x##() noexcept {				\
-				return _Elems[i];						\
-			}											\
-			_NODISCARD const T& x##() const noexcept {	\
-				return _Elems[i];						\
-			}
-
-		};
-
-		template <typename T>
-		struct Array<T, 1> : public CommonArray<T, 1> {
-			using CommonArray<T, 1>::CommonArray;
-			using CommonArray<T, 1>::_Elems;
-			Array(const CommonArray<T, 1>& that) : CommonArray<T, 1>(that) {}
-
-			TR_ARRAY_ELEM_ALIAS(x, 0);
-		};
-
-		template <typename T>
-		struct Array<T, 2> : public CommonArray<T, 2> {
-			using CommonArray<T, 2>::CommonArray;
-			using CommonArray<T, 2>::_Elems;
-			Array(const CommonArray<T, 2>& that) : CommonArray<T, 2>(that) {}
-
-			TR_ARRAY_ELEM_ALIAS(x, 0);
-			TR_ARRAY_ELEM_ALIAS(y, 1);
-		};
-
-		template <typename T>
-		struct Array<T, 3> : public CommonArray<T, 3> {
-			using CommonArray<T, 3>::CommonArray;
-			using CommonArray<T, 3>::_Elems;
-			Array(const CommonArray<T, 3>& that) : CommonArray<T, 3>(that) {}
-
-			TR_ARRAY_ELEM_ALIAS(x, 0);
-			TR_ARRAY_ELEM_ALIAS(y, 1);
-			TR_ARRAY_ELEM_ALIAS(z, 2);
-
-			TR_ARRAY_ELEM_ALIAS(r, 0);
-			TR_ARRAY_ELEM_ALIAS(g, 1);
-			TR_ARRAY_ELEM_ALIAS(b, 2);
-		};
-
-		template <typename T>
-		struct Array<T, 4> : public CommonArray<T, 4> {
-			using CommonArray<T, 4>::CommonArray;
-			using CommonArray<T, 4>::_Elems;
-			Array(const CommonArray<T, 4>& that) : CommonArray<T, 4>(that) {}
-
-			TR_ARRAY_ELEM_ALIAS(x, 0);
-			TR_ARRAY_ELEM_ALIAS(y, 1);
-			TR_ARRAY_ELEM_ALIAS(z, 2);
-			TR_ARRAY_ELEM_ALIAS(w, 3);
-
-			TR_ARRAY_ELEM_ALIAS(r, 0);
-			TR_ARRAY_ELEM_ALIAS(g, 1);
-			TR_ARRAY_ELEM_ALIAS(b, 2);
-			TR_ARRAY_ELEM_ALIAS(a, 3);
 		};
 
 		#define TR_ARRAY_ALIAS(x, n)    \
