@@ -13,6 +13,7 @@ export import TR.Graphics.ArrayResource;
 export import TR.Windows.Input;
 export import TR.Windows.RawKeyboardListener;
 export import TR.Windows.RawMouseListener;
+import State;
 
 import <algorithm>;
 
@@ -48,6 +49,8 @@ export struct Camera {
 		inputMap->arrayResources["camera"].gpuAddress = buffer.resource.resource->GetGPUVirtualAddress();
 		
 		Procedure<Windows::Input::_RawMouseMoveEvent*> mouseMoveListener = [this](Windows::Input::_RawMouseMoveEvent* e) {
+			if (!State::active)
+				return;
 			if (!e->foreground)
 				return;
 			this->info.rotation[1] += (float)e->movement[0] * sensitivity;
@@ -60,13 +63,15 @@ export struct Camera {
 
 	void Update(ID3D12GraphicsCommandList* cmdList) {
 		targetVelocity *= 0.0f;
-		for (size_t i = 0; i < movementKeys.size(); i++) {
-			if (GetKeyState(movementKeys[i].first) & 0x8000)
-				targetVelocity[i] += speed;
-			if (GetKeyState(movementKeys[i].second) & 0x8000)
-				targetVelocity[i] -= speed;
+		if (State::active) {
+			for (size_t i = 0; i < movementKeys.size(); i++) {
+				if (GetKeyState(movementKeys[i].first) & 0x8000)
+					targetVelocity[i] += speed;
+				if (GetKeyState(movementKeys[i].second) & 0x8000)
+					targetVelocity[i] -= speed;
+			}
+			Rotate(targetVelocity, info.rotation);
 		}
-		Rotate(targetVelocity, info.rotation);
 
 		float delta = clock.Restart().Seconds();
 		Float3 diff = targetVelocity - velocity;

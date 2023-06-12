@@ -30,22 +30,13 @@ bool Intersects(float3 origin, float3 ray, Rect rect){
     return (sMin <= sMax) && sMax > 0.0f;
 }
 
-bool TestIntersect(float3 origin, float3 ray, Rect rect)
-{
-    [loop] for (uint i = 0; i < 10000; i++){
-        if (Intersects(origin, ray, rect))
-            return true;
-    }
-    return false;
-}
-
 float4 main(VSOutput vsOutput) : SV_TARGET
 {
     Rect rect;
     rect.low = float3(-0.5f, -0.5f, -0.5f);
     rect.high = float3(0.5f, 0.5f, 0.5f);
     
-    if (TestIntersect(camera[0].position, vsOutput.sightRay, rect))
+    if (Intersects(camera[0].position, vsOutput.sightRay, rect))
         return float4(1.0f, 1.0f, 1.0f, 1.0f);
     
     return float4(vsOutput.sightRay, 1.0f);

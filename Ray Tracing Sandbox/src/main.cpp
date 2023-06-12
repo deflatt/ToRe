@@ -10,6 +10,7 @@ import TR.Graphics.ArrayResource;
 import TR.Graphics.RWArrayResource;
 import FullscreenRenderer;
 import Camera;
+import State;
 
 using namespace TR;
 
@@ -33,6 +34,7 @@ int main() {
 
 		Windows::Input::RawMouseListener::Register(window.window.hwnd);
 		Windows::Input::listeners.Insert(&Windows::Input::rawMouseListener);
+		Windows::Input::listeners.Insert(&Windows::Input::keyboardListener);
 
 		Graphics::_WinGraphics graphics = {};
 		graphics.Init(window.window.hwnd, (Long2)windowSize);
@@ -56,6 +58,8 @@ int main() {
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
 
 		renderer.Init((Long2)windowSize, cmdList);
+
+		State::Init(window.window.hwnd);
 
 		while (true) {
 			window.HandleMessages();

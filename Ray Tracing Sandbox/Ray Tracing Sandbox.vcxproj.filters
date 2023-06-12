@@ -25,6 +25,12 @@
     <ClCompile Include="src\Math.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\BoxMap.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\State.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Shaders\RayVS.hlsl">
