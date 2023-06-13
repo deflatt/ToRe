@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\Shaders\Math.hlsli" />
+    <None Include="src\Shaders\Ray_trace.hlsli" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

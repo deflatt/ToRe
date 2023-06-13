@@ -44,5 +44,8 @@
     <None Include="src\Shaders\Math.hlsli">
       <Filter>Source Files\Shaders</Filter>
     </None>
+    <None Include="src\Shaders\Ray_trace.hlsli">
+      <Filter>Source Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

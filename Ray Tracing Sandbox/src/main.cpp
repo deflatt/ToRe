@@ -1,3 +1,5 @@
+
+#include <random>
 #include <iostream>
 #include <Windows.h>
 #undef CreateWindow
@@ -11,6 +13,7 @@ import TR.Graphics.RWArrayResource;
 import FullscreenRenderer;
 import Camera;
 import State;
+import BoxMap;
 
 using namespace TR;
 
@@ -56,6 +59,35 @@ int main() {
 		Camera camera = {};
 		camera.Init(&renderer.inputMap);
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
+
+
+		using _BoxMap = BoxMap<float, uint, 3, 512.0f>;
+		_BoxMap boxMap = {};
+		boxMap.Init((1 << 16));
+
+		std::default_random_engine randomEngine = {};
+		std::uniform_real_distribution<float> randomLow(-160.0f, 160.0f);
+		std::uniform_real_distribution<float> randomSize(0.2f, 5.0f);
+
+		for (UINT i = 0; i < 10000; i++) {
+			Float3 low = { randomLow(randomEngine), randomLow(randomEngine), randomLow(randomEngine) };
+			Float3 high = low + Float3{ randomSize(randomEngine), randomSize(randomEngine), randomSize(randomEngine) };
+			boxMap.Insert({ { low, high }, 0 });
+		}
+
+		Graphics::_ArrayBuffer containerBuffer = {};
+		containerBuffer.Init(boxMap.containers.elements.size(), sizeof(_BoxMap::Container));
+		containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
+
+		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["containers"], 1);
+		renderer.inputMap.arrayResources["containers"].gpuAddress = containerBuffer.resource.resource->GetGPUVirtualAddress();
+
+		Graphics::_ArrayBuffer nodeBuffer = {};
+		nodeBuffer.Init(boxMap.nodes.elements.size(), sizeof(_BoxMap::Node));
+		nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
+
+		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["nodes"], 2);
+		renderer.inputMap.arrayResources["nodes"].gpuAddress = nodeBuffer.resource.resource->GetGPUVirtualAddress();
 
 		renderer.Init((Long2)windowSize, cmdList);
 
