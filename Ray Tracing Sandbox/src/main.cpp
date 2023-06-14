@@ -61,19 +61,31 @@ int main() {
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
 
 
-		using _BoxMap = BoxMap<float, uint, 3, 512.0f>;
+		using _BoxMap = BoxMap<float, uint, 3, 50, 2.0f>;
 		_BoxMap boxMap = {};
-		boxMap.Init((1 << 16));
+		boxMap.Init((1 << 24));
 
 		std::default_random_engine randomEngine = {};
 		std::uniform_real_distribution<float> randomLow(-160.0f, 160.0f);
 		std::uniform_real_distribution<float> randomSize(0.2f, 5.0f);
 
-		for (UINT i = 0; i < 10000; i++) {
-			Float3 low = { randomLow(randomEngine), randomLow(randomEngine), randomLow(randomEngine) };
-			Float3 high = low + Float3{ randomSize(randomEngine), randomSize(randomEngine), randomSize(randomEngine) };
-			boxMap.Insert({ { low, high }, 0 });
+		//for (UINT i = 0; i < 10000; i++) {
+		//	Float3 low = { randomLow(randomEngine), randomLow(randomEngine), randomLow(randomEngine) };
+		//	Float3 high = low + Float3{ randomSize(randomEngine), randomSize(randomEngine), randomSize(randomEngine) };
+		//	boxMap.Insert({ { low, high }, 0 });
+		//}
+		for (float x = 0; x < 100; x++) {
+			for (float y = 0; y < 100; y++) {
+				for (float z = 0; z < 100; z++) {
+					if (x == 0 || x == 99 || z == 0 || z == 99) {
+						Float3 low = { x, y, z };
+						Float3 high = { x + 1, y + 1, z + 1 };
+						boxMap.Insert({ { low, high }, 0 });
+					}
+				}
+			}
 		}
+		
 
 		Graphics::_ArrayBuffer containerBuffer = {};
 		containerBuffer.Init(boxMap.containers.elements.size(), sizeof(_BoxMap::Container));

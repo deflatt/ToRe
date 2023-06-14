@@ -25,7 +25,8 @@ struct BoxMap {
         T_val GetSum() {
             T_val sum = (T_val)0;
             for (size_t i = 0; i < numDims; i++)
-                sum += high[i] - low[i];
+                //sum += high[i] - low[i];
+                sum = std::max(sum, high[i] - low[i]);
             return sum;
         }
         void Fit(Box that) {

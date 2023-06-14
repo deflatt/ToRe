@@ -34,6 +34,7 @@ StructuredBuffer<Camera> camera : register(t0);
 
 float4 main(VSOutput vsOutput) : SV_TARGET
 {
+    vsOutput.sightRay = normalize(vsOutput.sightRay);
     TraceResult t = Trace(camera[0].position, vsOutput.sightRay);
     if (t.scale == 1.#INF)
         return 0.0f;
