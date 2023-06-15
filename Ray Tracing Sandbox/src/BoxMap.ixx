@@ -8,8 +8,16 @@ export import <limits>;
 
 using namespace TR;
 
+import <iostream>;
+
 struct E_BoxMapListOverflow : public _Exception {
     E_BoxMapListOverflow() : _Exception("BoxMap list overflow.") {}
+};
+struct E_BoxMapBadLocation : public _Exception {
+    E_BoxMapBadLocation() : _Exception("Invalid BoxMap location.") {}
+};
+struct E_BoxMapBadRemoval : public _Exception {
+    E_BoxMapBadRemoval() : _Exception("Only locked containers can be removed.") {}
 };
 
 export template <typename T_val, typename T_ind, size_t numDims, T_val startSum, T_val divisor = (T_val)2>
@@ -55,7 +63,7 @@ struct BoxMap {
         T_ind node = noInd;
         T_ind siblingContainer = noInd;
         T_ind parentContainer = noInd;
-        Bool locked = false;
+        Bool locked = false; // Move to Node?
     };
 
     template <typename T>
@@ -159,7 +167,32 @@ public:
     }
 
     void Remove(Location location) {
+        // Will require a full Location once compression has been added
 
+        Container* container = &containers.elements[location.back()];
+        if (!container->locked) {
+            throw E_BoxMapBadRemoval();
+        }
+        Container* parentContainer = &containers.elements[container->parentContainer];
+        Node* parent = &nodes.elements[parentContainer->node];
+        if (parent->childContainer == location.back()) {
+            parent->childContainer = container->siblingContainer;
+            std::cout << "Set parent to " << parent->childContainer << std::endl;
+        }
+        else {
+            for (T_ind child = nodes.elements[parentContainer->node].childContainer;; child = containers.elements[child].siblingContainer) {
+                Container* childContainer = &containers.elements[child];
+                if (childContainer->siblingContainer == noInd) {
+                    throw E_BoxMapBadLocation();
+                }
+                else if (childContainer->siblingContainer == location.back()) {
+                    childContainer->siblingContainer = container->siblingContainer;
+                    break;
+                }
+            }
+        }
+        nodes.Remove(container->node);
+        containers.Remove(location.back());
     }
 
 };

@@ -61,9 +61,9 @@ int main() {
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
 
 
-		using _BoxMap = BoxMap<float, uint, 3, 50, 2.0f>;
+		using _BoxMap = BoxMap<float, uint, 3, 4, 2.0f>;
 		_BoxMap boxMap = {};
-		boxMap.Init((1 << 24));
+		boxMap.Init((1 << 17));
 
 		std::default_random_engine randomEngine = {};
 		std::uniform_real_distribution<float> randomLow(-160.0f, 160.0f);
@@ -74,18 +74,24 @@ int main() {
 		//	Float3 high = low + Float3{ randomSize(randomEngine), randomSize(randomEngine), randomSize(randomEngine) };
 		//	boxMap.Insert({ { low, high }, 0 });
 		//}
-		for (float x = 0; x < 100; x++) {
-			for (float y = 0; y < 100; y++) {
-				for (float z = 0; z < 100; z++) {
-					if (x == 0 || x == 99 || z == 0 || z == 99) {
-						Float3 low = { x, y, z };
-						Float3 high = { x + 1, y + 1, z + 1 };
-						boxMap.Insert({ { low, high }, 0 });
-					}
-				}
-			}
-		}
-		
+		//for (float x = 0; x < 100; x++) {
+		//	for (float y = 0; y < 100; y++) {
+		//		for (float z = 0; z < 100; z++) {
+		//			if (x == 0 || x == 99 || z == 0 || z == 99) {
+		//				Float3 low = { x, y, z };
+		//				Float3 high = { x + 1, y + 1, z + 1 };
+		//				boxMap.Insert({ { low, high }, 0 });
+		//			}
+		//		}
+		//	}
+		//}
+		//for (UINT i = 0; i < 100000; i++) {
+		//	_BoxMap::Location l = boxMap.Insert({ { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }}, 0 });
+		//	boxMap.Remove(l);
+		//	std::cout << i << std::endl;
+		//}
+		boxMap.Insert({ { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }}, 0 });
+		_BoxMap::Location loc = boxMap.Insert({ { { 2.0f, 2.0f, 2.0f }, { 3.0f, 3.0f, 3.0f }}, 0 });
 
 		Graphics::_ArrayBuffer containerBuffer = {};
 		containerBuffer.Init(boxMap.containers.elements.size(), sizeof(_BoxMap::Container));
@@ -105,8 +111,17 @@ int main() {
 
 		State::Init(window.window.hwnd);
 
+		Clock<double> c;
+		bool b = false;
 		while (true) {
 			window.HandleMessages();
+
+			if (c.Elapsed().Seconds() >= 5.0 && !b) {
+				b = true;
+				boxMap.Remove(loc);
+				containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
+				nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
+			}
 
 			camera.Update(cmdList);
 			//std::cout << camera.targetVelocity.ToString() << std::endl;

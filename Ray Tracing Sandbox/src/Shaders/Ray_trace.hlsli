@@ -53,31 +53,36 @@ TraceResult Trace(float3 origin, float3 ray){
     
     float curScale = 0.0f;
     
+    Container container;
+    Node node;
+    Intersection intersection;
     [loop] while (true) {
         float newScale = 1.#INF;
         
         uint curContainer = 0;
         bool newContainer = true;
         [loop] while (true) {
+            container = containers[curContainer];
+            node = nodes[container.node];
             if (newContainer) {
-                Intersection intersection = Intersects(origin, ray, nodes[containers[curContainer].node].box);
+                intersection = Intersects(origin, ray, node.box);
                 if (intersection.sMin >= 0.0f && intersection.sMin < newScale){
                     if (intersection.sMin > curScale) {
                         newScale = intersection.sMin;
                     }
-                    else if (intersection.sMax > curScale && !containers[curContainer].locked) {
-                        curContainer = nodes[containers[curContainer].node].childContainer;
+                    else if (intersection.sMax > curScale && !container.locked && node.childContainer != noInd) {
+                        curContainer = node.childContainer;
                         newContainer = true;
                         continue;
                     }
                 }
             }
-            if (containers[curContainer].siblingContainer != noInd) {
-                curContainer = containers[curContainer].siblingContainer;
+            if (container.siblingContainer != noInd) {
+                curContainer = container.siblingContainer;
                 newContainer = true;
                 continue;
             }
-            curContainer = containers[curContainer].parentContainer;
+            curContainer = container.parentContainer;
             if (curContainer == noInd)
                 break;
             newContainer = false;
@@ -89,26 +94,28 @@ TraceResult Trace(float3 origin, float3 ray){
         curContainer = 0;
         newContainer = true;
         [loop] while (true) {
+            container = containers[curContainer];
+            node = nodes[container.node];
             if (newContainer) {
-                Intersection intersection = Intersects(origin, ray, nodes[containers[curContainer].node].box);
-                if (intersection.sMin >= 0.0f && intersection.sMin <= curScale && intersection.sMax >= curScale){
-                    if (containers[curContainer].locked) {
+                Intersection intersection = Intersects(origin, ray, node.box);
+                if (intersection.sMin >= 0.0f && intersection.sMin <= curScale && intersection.sMax >= curScale) {
+                    if (container.locked) {
                         result.scale = intersection.sMin;
                         break;
                     }
-                    else {
-                        curContainer = nodes[containers[curContainer].node].childContainer;
+                    else if (node.childContainer != noInd) {
+                        curContainer = node.childContainer;
                         newContainer = true;
                         continue;
                     }
                 }
             }
-            if (containers[curContainer].siblingContainer != noInd) {
-                curContainer = containers[curContainer].siblingContainer;
+            if (container.siblingContainer != noInd) {
+                curContainer = container.siblingContainer;
                 newContainer = true;
                 continue;
             }
-            curContainer = containers[curContainer].parentContainer;
+            curContainer = container.parentContainer;
             if (curContainer == noInd)
                 break;
             newContainer = false;
