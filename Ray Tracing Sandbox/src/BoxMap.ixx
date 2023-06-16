@@ -170,14 +170,18 @@ public:
         // Will require a full Location once compression has been added
 
         Container* container = &containers.elements[location.back()];
-        if (!container->locked) {
-            throw E_BoxMapBadRemoval();
-        }
+        //if (!container->locked) {
+        //    throw E_BoxMapBadRemoval();
+        //}
         Container* parentContainer = &containers.elements[container->parentContainer];
         Node* parent = &nodes.elements[parentContainer->node];
         if (parent->childContainer == location.back()) {
             parent->childContainer = container->siblingContainer;
-            std::cout << "Set parent to " << parent->childContainer << std::endl;
+            if (parent->childContainer == noInd) {
+                Location parentLocation = location;
+                parentLocation.pop_back();
+                Remove(parentLocation);
+            }
         }
         else {
             for (T_ind child = nodes.elements[parentContainer->node].childContainer;; child = containers.elements[child].siblingContainer) {
@@ -193,6 +197,13 @@ public:
         }
         nodes.Remove(container->node);
         containers.Remove(location.back());
+    }
+
+    Location Move(Location location, Box dstBox) {
+        Node node = nodes.elements[containers.elements[location.back()].node];
+        Remove(location);
+        node.box = dstBox;
+        return Insert(node);
     }
 
 };

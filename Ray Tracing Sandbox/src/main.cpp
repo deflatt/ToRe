@@ -111,17 +111,24 @@ int main() {
 
 		State::Init(window.window.hwnd);
 
-		Clock<double> c;
-		bool b = false;
 		while (true) {
 			window.HandleMessages();
 
-			if (c.Elapsed().Seconds() >= 5.0 && !b) {
-				b = true;
-				boxMap.Remove(loc);
-				containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
-				nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
+			if (GetKeyState(VK_LEFT) & 0x8000) {
+				_BoxMap::Box b = boxMap.nodes.elements[boxMap.containers.elements[loc.back()].node].box;
+				b.low[0] -= 0.01f;
+				b.high[0] -= 0.01f;
+				loc = boxMap.Move(loc, b);
 			}
+			if (GetKeyState(VK_RIGHT) & 0x8000) {
+				_BoxMap::Box b = boxMap.nodes.elements[boxMap.containers.elements[loc.back()].node].box;
+				b.low[0] += 0.01f;
+				b.high[0] += 0.01f;
+				loc = boxMap.Move(loc, b);
+			}
+			std::cout << boxMap.nodes.nextElement << std::endl;
+			containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
+			nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
 
 			camera.Update(cmdList);
 			//std::cout << camera.targetVelocity.ToString() << std::endl;
