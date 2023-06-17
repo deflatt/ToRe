@@ -23,7 +23,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Windows", "Libraries\Window
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Graphics", "Libraries\Graphics\Graphics.vcxproj", "{36903DED-F0E2-4CF1-93FA-AC53474B7A52}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ray Tracing Sandbox", "Ray Tracing Sandbox\Ray Tracing Sandbox.vcxproj", "{6EB51376-610B-4016-A293-CB6CA58A239E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ray Tracing Sandbox", "Projects\Ray Tracing Sandbox\Ray Tracing Sandbox.vcxproj", "{F760F680-3376-497C-9C8B-BC1DD70F4DE8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,10 +59,10 @@ Global
 		{36903DED-F0E2-4CF1-93FA-AC53474B7A52}.Debug|x64.Build.0 = Debug|x64
 		{36903DED-F0E2-4CF1-93FA-AC53474B7A52}.Release|x64.ActiveCfg = Release|x64
 		{36903DED-F0E2-4CF1-93FA-AC53474B7A52}.Release|x64.Build.0 = Release|x64
-		{6EB51376-610B-4016-A293-CB6CA58A239E}.Debug|x64.ActiveCfg = Debug|x64
-		{6EB51376-610B-4016-A293-CB6CA58A239E}.Debug|x64.Build.0 = Debug|x64
-		{6EB51376-610B-4016-A293-CB6CA58A239E}.Release|x64.ActiveCfg = Release|x64
-		{6EB51376-610B-4016-A293-CB6CA58A239E}.Release|x64.Build.0 = Release|x64
+		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Debug|x64.ActiveCfg = Debug|x64
+		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Debug|x64.Build.0 = Debug|x64
+		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Release|x64.ActiveCfg = Release|x64
+		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -75,7 +75,7 @@ Global
 		{A6C9E0EF-B690-4E00-9043-B534148CD9DA} = {0A753A91-892B-4151-A967-9CE41856E76B}
 		{BA89DAA3-A8C9-4784-B740-AFAA4260762A} = {0A753A91-892B-4151-A967-9CE41856E76B}
 		{36903DED-F0E2-4CF1-93FA-AC53474B7A52} = {0A753A91-892B-4151-A967-9CE41856E76B}
-		{6EB51376-610B-4016-A293-CB6CA58A239E} = {615397A5-CE7D-4348-9306-56D359D027D7}
+		{F760F680-3376-497C-9C8B-BC1DD70F4DE8} = {615397A5-CE7D-4348-9306-56D359D027D7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CE5F6B75-82A6-40BD-85C3-A9A412353009}

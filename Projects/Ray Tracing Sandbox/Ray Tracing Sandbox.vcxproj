@@ -20,17 +20,6 @@
     <ClCompile Include="src\State.ixx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Libraries\Essentials\Essentials.vcxproj">
-      <Project>{a6c9e0ef-b690-4e00-9043-b534148cd9da}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Libraries\Graphics\Graphics.vcxproj">
-      <Project>{36903ded-f0e2-4cf1-93fa-ac53474b7a52}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Libraries\Windows\Windows.vcxproj">
-      <Project>{ba89daa3-a8c9-4784-b740-afaa4260762a}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <FxCompile Include="src\Shaders\RayPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -46,10 +35,21 @@
     <None Include="src\Shaders\Math.hlsli" />
     <None Include="src\Shaders\Ray_trace.hlsli" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Libraries\Essentials\Essentials.vcxproj">
+      <Project>{a6c9e0ef-b690-4e00-9043-b534148cd9da}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\Graphics\Graphics.vcxproj">
+      <Project>{36903ded-f0e2-4cf1-93fa-ac53474b7a52}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\Windows\Windows.vcxproj">
+      <Project>{ba89daa3-a8c9-4784-b740-afaa4260762a}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{6eb51376-610b-4016-a293-cb6ca58a239e}</ProjectGuid>
+    <ProjectGuid>{F760F680-3376-497C-9C8B-BC1DD70F4DE8}</ProjectGuid>
     <RootNamespace>Ray_Tracing_Sandbox</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
