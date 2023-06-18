@@ -5,10 +5,27 @@ export import TR.Essentials.Array;
 
 export import <vector>;
 export import <limits>;
+export import <unordered_map>;
 
 using namespace TR;
 
 import <iostream>;
+
+template <typename T, size_t length>
+struct std::hash<Array<T, length>> {
+
+    static constexpr size_t numBits = sizeof(size_t) * (size_t)8;
+
+    size_t operator()(const Array<T, length>& a) const {
+        size_t result = 0;
+        for (size_t i = 0; i < length; i++) {
+            size_t curHash = std::hash<T>()(a[i]);
+            result ^= (curHash << (i % numBits)) | (curHash >> (numBits - (i % numBits)));
+        }
+        return result;
+    }
+
+};
 
 struct E_BoxMapListOverflow : public _Exception {
     E_BoxMapListOverflow() : _Exception("BoxMap list overflow.") {}
@@ -25,13 +42,13 @@ struct BoxMap {
 
     static constexpr T_ind noInd = (T_ind)-1;
     static constexpr T_val inf = std::numeric_limits<T_val>::max();
-    using Position = Array<T_val, numDims>;
+    using Vector = Array<T_val, numDims>;
     using Bool = uint;
 
     template <typename T>
     struct List {
         std::vector<T> elements = {};
-        T_ind nextElement = 1;
+        T_ind nextElement = 0;
         std::vector<T_ind> removed = {};
         T_ind numRemoved = 0;
 
@@ -56,29 +73,9 @@ struct BoxMap {
             elements[ind] = T();
             removed[numRemoved++] = ind;
         }
-    };
 
-    struct Box {
-        Position low = Position(inf), high = Position(-inf);
-        T_val GetSum() {
-            T_val sum = (T_val)0;
-            for (size_t i = 0; i < numDims; i++)
-                //sum += high[i] - low[i];
-                sum = std::max(sum, high[i] - low[i]);
-            return sum;
-        }
-        void Fit(Box that) {
-            for (size_t i = 0; i < numDims; i++) {
-                if (that.low[i] < low[i])
-                    low[i] = that.low[i];
-                if (that.high[i] > high[i])
-                    high[i] = that.high[i];
-            }
-        }
-        Box GetFit(Box that) {
-            Box result = *this;
-            result.Fit(that);
-            return result;
+        T& operator[](T_ind ind) {
+            return elements[ind];
         }
     };
 
@@ -87,25 +84,81 @@ struct BoxMap {
     // Indices implicitly point to containers unless otherwise specified
 
     struct Node {
-        Box box = {};
+        //Vector offset = {};
+        Vector size = {};
         T_ind child = noInd;
         enum struct Type {
-            root = (int)(T_ind)0,
-            node = (int)(T_ind)1,
-            object = (int)(T_ind)2
+            root = 0,
+            node = 1,
+            object = 2
         } type;
+        T_ind refCount = 0; // Probably move to separate buffer later
     };
 
     struct Container {
-        Position offset = {};
+        Vector offset = {};
         T_ind node = noInd;
         T_ind sibling = noInd;
         T_ind parent = noInd;
-        T_ind refCount = 0; // Probably move to separate buffer later
     };
 
     List<Node> nodes = {};
     List<Container> containers = {};
+
+    auto ObjectHash = [this](const Node& a) -> size_t {
+        return std::hash<T_ind>()(a.child) ^ std::hash<decltype(a.size)>()(a.size) ^ std::hash<int>()((int)a.type);
+    };
+
+    auto ContainerHash = [this](const Container& a) -> size_t {
+        const Node& node = nodes[a.node];
+        return ObjectHash(node) ^ std::hash<decltype(a.offset)>()(a.offset);
+    };
+
+    auto NodeHash = [this](const Node& a) -> size_t {
+        if (a.type == Node::Type::object) {
+            return ObjectHash(a);
+        }
+        else {
+            size_t result = std::hash<decltype(a.offset)>()(a.offset) ^ std::hash<int>()((int)a.type);
+            for (T_ind cur = a.child; cur != noInd; cur = nodes[cur].sibling)
+                result ^= ContainerHash(containers[cur]);
+            return result;
+        }
+    };
+
+    auto NodeEqual = [this](const Node& a, const Node& b) -> bool {
+        
+    };
+
+    std::unordered_map<Node, T_ind, decltype(NodeHash), decltype(NodeEqual)> nodeMap = {};
+
+    void Init(T_ind size) {
+        nodes.Init(size);
+        containers.Init(size);
+
+        nodes.New();
+        containers.New();
+
+        
+    }
+
+    T_ind CreateRoot() {
+        T_ind nodeInd = nodes.New();
+        Node* node = &nodes[nodeInd];
+        node->type = Node::Type::root;
+        return nodeInd;
+    }
+
+    T_ind CreateObject() {
+        T_ind nodeInd = nodes.New();
+        Node* node = &nodes[nodeInd];
+        node->type = Node::Type::object;
+        return nodeInd;
+    }
+
+    void Insert(T_ind nodeInd, Vector offset, T_ind rootInd = 0) {
+
+    }
 
 };
 
