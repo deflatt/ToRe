@@ -1,4 +1,3 @@
-
 #include <random>
 #include <iostream>
 #include <Windows.h>
@@ -17,10 +16,68 @@ import BoxMap;
 
 using namespace TR;
 
+using _BoxMap = BoxMap<float, uint, 3, (float)(1 << 8), 2.0f>;
+
+void Print(_BoxMap& boxMap, uint container, int depth = 0) {
+	std::string white(depth * 4, ' ');
+
+	std::cout << white << "{" << std::endl;
+	_BoxMap::Container& c = boxMap.containers[container];
+	std::cout << white << "offset = " << c.offset.ToString() << std::endl;
+
+	_BoxMap::Node& node = boxMap.nodes[c.node];
+	std::cout << white << "size = " << node.size.ToString() << std::endl;
+
+	if (node.type == _BoxMap::Node::Type::object) {
+		std::cout << white << "child = " << node.child << std::endl;
+	}
+	else {
+		std::cout << white << "children = [" << std::endl;
+		for (uint childInd = node.child; childInd != _BoxMap::noInd; childInd = boxMap.containers[childInd].sibling) {
+			Print(boxMap, childInd, depth + 1);
+		}
+		std::cout << white << "]" << std::endl;
+	}
+	std::cout << white << "}" << std::endl;
+}
+
+void Print(_BoxMap& boxMap) {
+	Print(boxMap, 0);
+}
+
+
 int main() {
 
 	try {
 
+		
+		_BoxMap boxMap = {};
+
+		boxMap.Init(1 << 22);
+
+		//boxMap.InsertObject({ 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, 0);
+		//boxMap.InsertObject({ 5.0f, 5.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, 1);
+		//boxMap.InsertObject({ 4.5f, 6.5f, -2.5f }, { 1.0f, 1.0f, 1.0f }, 2);
+		Float3 offset = { 3.0f, 6.0f, -2.0f };
+		_BoxMap::Location loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+		//boxMap.InsertObject({ -1.0f, 2.0f, 9.0f }, { 1.0f, 1.0f, 1.0f }, 4);
+		//boxMap.InsertObject({ -5.0f, -3.0f, -1.0f }, { 1.0f, 1.0f, 1.0f }, 5);
+		//boxMap.InsertObject({ -4.0f, -2.0f, -1.5f }, { 1.0f, 1.0f, 1.0f }, 6);
+
+		for (float x = -64.0f; x <= 64.0f; x += 2.0f) {
+			for (float y = -64.0f; y <= 64.0f; y += 2.0f) {
+				for (float z = -64.0f; z <= 64.0f; z += 2.0f) {
+					boxMap.InsertObject({ x, y, z }, { 0.5f, 0.5f, 0.5f }, 0);
+				}
+			}
+		}
+
+		//Print(boxMap);
+		//uint objInd = boxMap.CreateObject();
+		//boxMap.nodes[objInd].size = { 1.0f, 1.0f, 1.0f };
+		//boxMap.nodes[objInd].child = 0;
+		//
+		//boxMap.Insert(objInd, { 1.0f, 1.0f, 1.0f });
 		Graphics::Device::Init();
 
 		Int2 windowSize = { 1280, 720 };
@@ -60,39 +117,6 @@ int main() {
 		camera.Init(&renderer.inputMap);
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
 
-
-		using _BoxMap = BoxMap<float, uint, 3, 4, 2.0f>;
-		_BoxMap boxMap = {};
-		boxMap.Init((1 << 17));
-
-		std::default_random_engine randomEngine = {};
-		std::uniform_real_distribution<float> randomLow(-160.0f, 160.0f);
-		std::uniform_real_distribution<float> randomSize(0.2f, 5.0f);
-
-		//for (UINT i = 0; i < 10000; i++) {
-		//	Float3 low = { randomLow(randomEngine), randomLow(randomEngine), randomLow(randomEngine) };
-		//	Float3 high = low + Float3{ randomSize(randomEngine), randomSize(randomEngine), randomSize(randomEngine) };
-		//	boxMap.Insert({ { low, high }, 0 });
-		//}
-		//for (float x = 0; x < 100; x++) {
-		//	for (float y = 0; y < 100; y++) {
-		//		for (float z = 0; z < 100; z++) {
-		//			if (x == 0 || x == 99 || z == 0 || z == 99) {
-		//				Float3 low = { x, y, z };
-		//				Float3 high = { x + 1, y + 1, z + 1 };
-		//				boxMap.Insert({ { low, high }, 0 });
-		//			}
-		//		}
-		//	}
-		//}
-		//for (UINT i = 0; i < 100000; i++) {
-		//	_BoxMap::Location l = boxMap.Insert({ { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }}, 0 });
-		//	boxMap.Remove(l);
-		//	std::cout << i << std::endl;
-		//}
-		boxMap.Insert({ { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }}, 0 });
-		_BoxMap::Location loc = boxMap.Insert({ { { 2.0f, 2.0f, 2.0f }, { 3.0f, 3.0f, 3.0f }}, 0 });
-
 		Graphics::_ArrayBuffer containerBuffer = {};
 		containerBuffer.Init(boxMap.containers.elements.size(), sizeof(_BoxMap::Container));
 		containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
@@ -114,24 +138,41 @@ int main() {
 		while (true) {
 			window.HandleMessages();
 
-			if (GetKeyState(VK_LEFT) & 0x8000) {
-				_BoxMap::Box b = boxMap.nodes.elements[boxMap.containers.elements[loc.back()].node].box;
-				b.low[0] -= 0.01f;
-				b.high[0] -= 0.01f;
-				loc = boxMap.Move(loc, b);
-			}
-			if (GetKeyState(VK_RIGHT) & 0x8000) {
-				_BoxMap::Box b = boxMap.nodes.elements[boxMap.containers.elements[loc.back()].node].box;
-				b.low[0] += 0.01f;
-				b.high[0] += 0.01f;
-				loc = boxMap.Move(loc, b);
-			}
-			std::cout << boxMap.nodes.nextElement << std::endl;
-			containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
-			nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
-
 			camera.Update(cmdList);
-			//std::cout << camera.targetVelocity.ToString() << std::endl;
+			
+			if (GetKeyState(VK_NUMPAD4) & 0x8000) {
+				offset[2] -= 0.05f;
+				boxMap.Remove(loc);
+				loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+			}
+			if (GetKeyState(VK_NUMPAD6) & 0x8000) {
+				offset[2] += 0.05f;
+				boxMap.Remove(loc);
+				loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+			}
+			if (GetKeyState(VK_NUMPAD8) & 0x8000) {
+				offset[0] += 0.05f;
+				boxMap.Remove(loc);
+				loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+			}
+			if (GetKeyState(VK_NUMPAD2) & 0x8000) {
+				offset[0] -= 0.05f;
+				boxMap.Remove(loc);
+				loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+			}
+			if (GetKeyState(VK_NUMPAD5) & 0x8000) {
+				offset[1] += 0.05f;
+				boxMap.Remove(loc);
+				loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+			}
+			if (GetKeyState(VK_NUMPAD0) & 0x8000) {
+				offset[1] -= 0.05f;
+				boxMap.Remove(loc);
+				loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
+			}
+
+			nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
+			containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
 
 			graphics.Clear({});
 
