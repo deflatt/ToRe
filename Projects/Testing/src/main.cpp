@@ -7,28 +7,25 @@
 #include <limits>
 #undef min
 #undef max
+#include <unordered_set>
 #include <unordered_map>
 
 import TR.Essentials.Array;
 using namespace TR;
 
-struct Base {
-    int i1, i2;
-};
-
 struct Test {
-    Base b;
-    
-    Base* operator->() {
-        return &b;
-    }
-
+    int i;
+    struct Hash {
+        size_t operator()(const Test& t) const {
+            return 0;
+        }
+    };
 };
 
 int main() {
     
-    Test t;
+    std::unordered_set<Test, Test::Hash> set;
     
-	
+
     return 0;
 }

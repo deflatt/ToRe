@@ -1,23 +1,26 @@
 #include "Math.hlsli"
 
+#define MAX_LOCATION_SIZE 16
+
 static const uint noInd = -1;
 
 struct Container {
     float3 offset;
     uint node;
     uint sibling;
-    uint parent;
 };
 StructuredBuffer<Container> containers : register(t1);
 
+#define NodeType int
 #define NODE_TYPE_ROOT 0
-#define NODE_TYPE_NODE 1
+#define NODE_TYPE_HELPER 1
 #define NODE_TYPE_OBJECT 2
 
 struct Node {
     float3 size;
     uint child;
-    int type;
+    NodeType type;
+    uint refCount;
 };
 StructuredBuffer<Node> nodes : register(t2);
 
@@ -65,9 +68,9 @@ TraceResult Trace(float3 origin, float3 ray){
     //float3 curOffset = 0.0f;
     bool newContainer = true;
     
-    // Gonna have to track full location once compression has been added
-    
+    uint location[MAX_LOCATION_SIZE];
     uint curDepth = 0;
+    
     [loop] while (true) {
         if (curDepth > result.depth)
             result.depth = curDepth;
@@ -75,6 +78,7 @@ TraceResult Trace(float3 origin, float3 ray){
         node = nodes[container.node];
         
         if (newContainer) {
+            location[curDepth] = curInd;
             //curOffset += container.offset;
             origin -= container.offset;
             
@@ -107,9 +111,9 @@ TraceResult Trace(float3 origin, float3 ray){
             curDepth++;
             continue;
         }
-        if (container.parent == noInd)
+        if (curDepth == 0)
             break;
-        curInd = container.parent;
+        curInd = location[curDepth - 1];
         newContainer = false;
         curDepth--;
     }
