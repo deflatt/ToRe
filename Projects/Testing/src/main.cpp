@@ -24,7 +24,6 @@ struct Test {
 
 int main() {
     
-    std::unordered_set<Test, Test::Hash> set;
     
 
     return 0;

@@ -72,14 +72,16 @@ TraceResult Trace(float3 origin, float3 ray){
     uint curDepth = 0;
     
     [loop] while (true) {
+        if (curDepth == MAX_LOCATION_SIZE)
+            break;
         if (curDepth > result.depth)
             result.depth = curDepth;
         container = containers[curInd];
         node = nodes[container.node];
         
         if (newContainer) {
-            location[curDepth] = curInd;
             //curOffset += container.offset;
+            location[curDepth] = curInd;
             origin -= container.offset;
             
             Box box;
@@ -107,8 +109,6 @@ TraceResult Trace(float3 origin, float3 ray){
         if (container.sibling != noInd) {
             curInd = container.sibling;
             newContainer = true;
-            
-            curDepth++;
             continue;
         }
         if (curDepth == 0)
