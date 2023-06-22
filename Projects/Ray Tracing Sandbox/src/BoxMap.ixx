@@ -235,11 +235,11 @@ protected:
 		node.refCount--;
 		if (node.type != Node::Type::root && node.refCount == 0) {
 			// Refer to a nodeHash by iterator instead of hashedNodes
-			nodeHashMap.erase(node);
 			if (node.type == Node::Type::helper) {
 				for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
 					RemoveReference(containers[childInd].node);
 			}
+			nodeHashMap.erase(node);
 			nodes.Remove(nodeInd);
 		}
 	}
@@ -310,8 +310,7 @@ protected:
 				}
 			}
 			else {
-				nodeHashMap.erase(node);
-				nodeHashMap.insert({ node, container.node });
+				//nodeHashMap.insert({ node, container.node });
 			}
 		}
 	}
@@ -331,22 +330,33 @@ protected:
 		float sum = GetSum(node.size);
 		if (sum <= maxChildSum / divisor) {
 			// TODO: Maybe greedily find the best match instead of inserting into the first acceptable one
+			T_ind minChildInd = noInd;
+			float minSum = inf;
 			for (T_ind childInd = rootNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
 				Container& childContainer = containers[childInd];
 				Node& child = nodes[childContainer.node];
 				if (child.type != Node::Type::helper)
 					continue;
-
 				Box childBox = { childContainer.offset, child.size };
 				Box fitBox = GetFit(childBox, nodeBox);
-				if (GetSum(fitBox.size) > maxChildSum)
-					continue;
+				float childSum = GetSum(fitBox.size);
+				if (childSum < minSum) {
+					minSum = childSum;
+					minChildInd = childInd;
+				}
+			}
+			if (minSum <= maxChildSum) {
+				Container& childContainer = containers[minChildInd];
+				Node& child = nodes[childContainer.node];
 				if (child.refCount > 1) {
 					RemoveReference(childContainer.node);
 					childContainer.node = DuplicateHelper(childContainer.node);
 					nodes[childContainer.node].refCount++;
 				}
-				Insert(nodeInd, offset, maxChildSum / divisor, childInd, location);
+				else {
+					nodeHashMap.erase(child);
+				}
+				Insert(nodeInd, offset, maxChildSum / divisor, minChildInd, location);
 				return;
 			}
 			T_ind containerInd = AddChild(rootContainer.node);
@@ -392,6 +402,9 @@ public:
 					newChildInd = containers[newChildInd].sibling;
 				}
 			}
+			else {
+				nodeHashMap.erase(node);
+			}
 		}
 		
 		while (location.size() > 1) {
@@ -415,9 +428,6 @@ public:
 					}
 				}
 			}
-			nodeHashMap.erase(parent);
-			nodeHashMap.insert({ parent, parentContainer.node });
-
 			RemoveReference(container.node);
 			containers.Remove(location.back());
 			location.pop_back();
@@ -426,6 +436,26 @@ public:
 				break;
 		}
 		// Update bounding boxes
+		for (T_ind i = 0; i < location.size(); i++) {
+			T_ind ind = location[location.size() - 1 - i];
+			Container& container = containers[ind];
+			Node& node = nodes[container.node];
+			if (node.child == noInd)
+				continue;
+
+			Vector low(inf), high(-inf);
+			for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling) {
+				Vector offset = containers[childInd].offset;
+				Vector size = nodes[containers[childInd].node].size;
+				for (size_t i = 0; i < numDims; i++) {
+					low[i] = std::min(low[i], offset[i]);
+					high[i] = std::max(high[i], offset[i] + size[i]);
+				}
+			}
+			node.size = high - low;
+			SetNodeOffset(ind, container.offset + low);
+		}
+
 		CompressLocation(location);
 	}
 

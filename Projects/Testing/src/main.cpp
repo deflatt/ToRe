@@ -9,9 +9,7 @@
 #undef max
 #include <unordered_set>
 #include <unordered_map>
-
-import TR.Essentials.Array;
-using namespace TR;
+#include <random>
 
 struct Test {
     int i;
@@ -24,6 +22,8 @@ struct Test {
 
 int main() {
     
+    std::default_random_engine randomEngine;
+    std::uniform_real_distribution<float> dist;
     
 
     return 0;
