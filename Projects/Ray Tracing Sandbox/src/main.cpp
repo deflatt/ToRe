@@ -99,6 +99,14 @@ int main() {
 			//	boxMap.Remove(cubes[i].loc);
 			//}
 		}
+
+		struct Material {
+			Float3 emission = {};
+		};
+		std::vector<Material> materials = {
+			{ { 1.0f, 0.0f, 1.0f } }
+		};
+
 		//Print(boxMap);
 		//return 0;
 
@@ -167,6 +175,13 @@ int main() {
 
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["nodes"], 2);
 		renderer.inputMap.arrayResources["nodes"].gpuAddress = nodeBuffer.resource.resource->GetGPUVirtualAddress();
+
+		Graphics::_ArrayBuffer materialBuffer = {};
+		materialBuffer.Init((UINT)materials.size(), sizeof(Material));
+		materialBuffer.Upload(&materials[0], cmdList);
+
+		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["materials"], 3);
+		renderer.inputMap.arrayResources["materials"].gpuAddress = materialBuffer.resource.resource->GetGPUVirtualAddress();
 
 		renderer.Init((Long2)windowSize, cmdList);
 

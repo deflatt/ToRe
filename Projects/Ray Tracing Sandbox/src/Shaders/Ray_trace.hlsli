@@ -27,6 +27,7 @@ StructuredBuffer<Node> nodes : register(t2);
 struct TraceResult {
     float scale;
     uint depth;
+    uint ind;
 };
 struct Intersection {
     float sMin, sMax;
@@ -36,6 +37,11 @@ struct Box {
     float3 low;
     float3 high;
 };
+
+struct Material {
+    float3 emission;
+};
+StructuredBuffer<Material> materials : register(t3);
 
 Intersection Intersects(float3 origin, float3 ray, Box box){
     float3 invRay = 1.0f / ray;
@@ -93,6 +99,7 @@ TraceResult Trace(float3 origin, float3 ray){
                 if (intersection.sMin < result.scale){
                     if (node.type == NODE_TYPE_OBJECT){
                         result.scale = intersection.sMin;
+                        result.ind = node.child;
                     }
                     else {
                         curInd = node.child;
