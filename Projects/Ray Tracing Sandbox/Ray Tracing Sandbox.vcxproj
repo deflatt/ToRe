@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\BoxMap.ixx" />
+    <ClCompile Include="src\BoxSet.ixx" />
     <ClCompile Include="src\Camera.ixx" />
     <ClCompile Include="src\FullscreenRenderer.cpp" />
     <ClCompile Include="src\FullscreenRenderer.ixx" />

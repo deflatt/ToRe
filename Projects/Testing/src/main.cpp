@@ -12,19 +12,22 @@
 #include <random>
 
 struct Test {
-    int i;
     struct Hash {
-        size_t operator()(const Test& t) const {
+        size_t operator()(const Test&) const {
+            std::cout << "Hashed" << std::endl;
             return 0;
         }
     };
+    bool operator==(const Test&) const {
+        return true;
+    }
 };
 
 int main() {
-    
-    std::default_random_engine randomEngine;
-    std::uniform_real_distribution<float> dist;
-    
+
+    std::unordered_map<Test, int, Test::Hash> m;
+    m.insert({ Test(), 0 });
+    if (m.count(Test())){}
 
     return 0;
 }

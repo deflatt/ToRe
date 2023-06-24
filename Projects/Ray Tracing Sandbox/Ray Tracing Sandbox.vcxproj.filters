@@ -25,7 +25,7 @@
     <ClCompile Include="src\Math.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\BoxMap.ixx">
+    <ClCompile Include="src\BoxSet.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\State.ixx">

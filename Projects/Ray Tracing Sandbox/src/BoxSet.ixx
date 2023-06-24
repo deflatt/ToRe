@@ -1,4 +1,4 @@
-export module BoxMap;
+export module BoxSet;
 
 export import TR.Essentials.Exception;
 export import TR.Essentials.Array;
@@ -28,21 +28,21 @@ struct ArrayHash {
 
 };
 
-struct E_BoxMapListOverflow : public _Exception {
-	E_BoxMapListOverflow() : _Exception("BoxMap list overflow.") {}
+struct E_BoxSetListOverflow : public _Exception {
+	E_BoxSetListOverflow() : _Exception("BoxSet list overflow.") {}
 };
-struct E_BoxMapBadLocation : public _Exception {
-	E_BoxMapBadLocation() : _Exception("Invalid BoxMap location.") {}
+struct E_BoxSetBadLocation : public _Exception {
+	E_BoxSetBadLocation() : _Exception("Invalid BoxSet location.") {}
 };
-struct E_BoxMapBadRemoval : public _Exception {
-	E_BoxMapBadRemoval() : _Exception("Helper nodes cannot be removed.") {}
+struct E_BoxSetBadRemoval : public _Exception {
+	E_BoxSetBadRemoval() : _Exception("Helper nodes cannot be removed.") {}
 };
-struct E_BoxMapNoReference : public _Exception {
-	E_BoxMapNoReference() : _Exception("Cannot remove reference from a non-referenced node.") {}
+struct E_BoxSetNoReference : public _Exception {
+	E_BoxSetNoReference() : _Exception("Cannot remove reference from a non-referenced node.") {}
 };
 
 export template <typename T_val, typename T_ind, size_t numDims, T_val startSum, T_val divisor = (T_val)2>
-struct BoxMap {
+struct BoxSet {
 
 	static constexpr T_ind noInd = (T_ind)-1;
 	static constexpr T_val inf = std::numeric_limits<T_val>::max();
@@ -67,7 +67,7 @@ struct BoxMap {
 			}
 			else {
 				if (nextElement == elements.size()) {
-					throw E_BoxMapListOverflow();
+					throw E_BoxSetListOverflow();
 				}
 				return nextElement++;
 			}
@@ -83,9 +83,9 @@ struct BoxMap {
 		}
 	};
 
-	using Location = std::vector<T_ind>;
-
 	// Indices implicitly point to containers unless otherwise specified
+
+	// Should probably bring back bounding boxes in nodes, although 'low' will always be 0 in helper nodes
 
 	struct Node {
 		//Vector offset = {};
@@ -110,13 +110,13 @@ struct BoxMap {
 	List<Container> containers = {};
 
 	struct NodeHash {
-		BoxMap& boxMap;
+		BoxSet& BoxSet;
 
 		size_t operator()(const Node& node) const {
 			if (node.type == Node::Type::helper) {
 				size_t result = 0;
-				for (T_ind childInd = node.child; childInd != noInd; childInd = boxMap.containers[childInd].sibling) {
-					Container& childContainer = boxMap.containers[childInd];
+				for (T_ind childInd = node.child; childInd != noInd; childInd = BoxSet.containers[childInd].sibling) {
+					Container& childContainer = BoxSet.containers[childInd];
 					result ^= ArrayHash<T_val, numDims>()(childContainer.offset);
 					result ^= std::hash<T_ind>()(childContainer.node);
 				}
@@ -145,17 +145,17 @@ struct BoxMap {
 			}
 		};
 
-		BoxMap& boxMap;
+		BoxSet& BoxSet;
 
 		bool operator()(const Node& first, const Node& second) const {
 			if (first.type != second.type)
 				return false;
 			if (first.type == Node::Type::helper) {
 				std::unordered_set<OffsetNode, OffsetNode::Hash> firstSet, secondSet;
-				for (T_ind childInd = first.child; childInd != noInd; childInd = boxMap.containers[childInd].sibling)
-					firstSet.insert({ boxMap.containers[childInd].offset, boxMap.containers[childInd].node });
-				for (T_ind childInd = second.child; childInd != noInd; childInd = boxMap.containers[childInd].sibling)
-					secondSet.insert({ boxMap.containers[childInd].offset, boxMap.containers[childInd].node });
+				for (T_ind childInd = first.child; childInd != noInd; childInd = BoxSet.containers[childInd].sibling)
+					firstSet.insert({ BoxSet.containers[childInd].offset, BoxSet.containers[childInd].node });
+				for (T_ind childInd = second.child; childInd != noInd; childInd = BoxSet.containers[childInd].sibling)
+					secondSet.insert({ BoxSet.containers[childInd].offset, BoxSet.containers[childInd].node });
 				return firstSet == secondSet;
 			}
 			else {
@@ -190,14 +190,7 @@ struct BoxMap {
 		return nodeInd;
 	}
 
-	Location Insert(T_ind nodeInd, Vector offset, T_ind rootInd = 0) {
-		Location location = {};
-		Insert(nodeInd, offset, startSum, rootInd, location);
-		CompressLocation(location);
-		return location;
-	}
-
-	Location InsertObject(Vector position, Vector size, T_ind child, T_ind rootInd = 0) {
+	void InsertObject(Vector position, Vector size, T_ind child, T_ind rootInd = 0) {
 		T_ind nodeInd = CreateObject();
 		nodes[nodeInd].size = size;
 		nodes[nodeInd].child = child;
@@ -230,7 +223,7 @@ protected:
 	void RemoveReference(T_ind nodeInd) {
 		Node& node = nodes[nodeInd];
 		if (node.refCount == 0) {
-			throw E_BoxMapNoReference();
+			throw E_BoxSetNoReference();
 		}
 		node.refCount--;
 		if (node.type != Node::Type::root && node.refCount == 0) {
@@ -295,86 +288,28 @@ protected:
 
 	// TODO: Add nodes to hashmap
 
-	void CompressLocation(Location location) {
-		for (T_ind i = 0; i + 1 < location.size(); i++) {
-			Container& container = containers[location[(T_ind)location.size() - i - 1]];
-			Node& node = nodes[container.node];
+	void CompressLocation(T_ind ind) {
+		Container& container = containers[ind];
+		Node& node = nodes[container.node];
 
-			// Compress
-			if (node.type != Node::Type::root && nodeHashMap.count(node)) {
-				T_ind hashInd = nodeHashMap.at(node);
-				if (hashInd != container.node) {
-					RemoveReference(container.node);
-					container.node = hashInd;
-					nodes[container.node].refCount++;
-				}
+		if (node.type == Node::Type::root)
+			return;
+		
+		if (nodeHashMap.count(node)) {
+			T_ind hashInd = nodeHashMap.at(node);
+			if (hashInd != container.node) {
+				RemoveReference(container.node);
+				container.node = hashInd;
+				nodes[container.node].refCount++;
 			}
-			else {
-				//nodeHashMap.insert({ node, container.node });
-			}
+		}
+		else {
+			nodeHashMap.insert({ node, container.node });
 		}
 	}
 
-	// offset is relative to the origin that the root lies in
-	void Insert(T_ind nodeInd, Vector offset, T_val maxChildSum, T_ind rootInd, Location& location) {
-		location.push_back(rootInd);
-
-		Container& rootContainer = containers[rootInd];
-		Node& rootNode = nodes[rootContainer.node];
-		Node& node = nodes[nodeInd];
-
-		Fit(rootInd, nodeInd, offset);
-
-		Box nodeBox = { offset, node.size };
-
-		float sum = GetSum(node.size);
-		if (sum <= maxChildSum / divisor) {
-			// TODO: Maybe greedily find the best match instead of inserting into the first acceptable one
-			T_ind minChildInd = noInd;
-			float minSum = inf;
-			for (T_ind childInd = rootNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
-				Container& childContainer = containers[childInd];
-				Node& child = nodes[childContainer.node];
-				if (child.type != Node::Type::helper)
-					continue;
-				Box childBox = { childContainer.offset, child.size };
-				Box fitBox = GetFit(childBox, nodeBox);
-				float childSum = GetSum(fitBox.size);
-				if (childSum < minSum) {
-					minSum = childSum;
-					minChildInd = childInd;
-				}
-			}
-			if (minSum <= maxChildSum) {
-				Container& childContainer = containers[minChildInd];
-				Node& child = nodes[childContainer.node];
-				if (child.refCount > 1) {
-					RemoveReference(childContainer.node);
-					childContainer.node = DuplicateHelper(childContainer.node);
-					nodes[childContainer.node].refCount++;
-				}
-				else {
-					nodeHashMap.erase(child);
-				}
-				Insert(nodeInd, offset, maxChildSum / divisor, minChildInd, location);
-				return;
-			}
-			T_ind containerInd = AddChild(rootContainer.node);
-			Container& container = containers[containerInd];
-			container.offset = offset;
-			container.node = nodes.New();
-			nodes[container.node].refCount++;
-			nodes[container.node].type = Node::Type::helper;
-			Insert(nodeInd, offset, maxChildSum / divisor, containerInd, location);
-		}
-		else {
-			T_ind containerInd = AddChild(rootContainer.node);
-			Container& container = containers[containerInd];
-			container.offset = offset;
-			container.node = nodeInd;
-			node.refCount++;
-			location.push_back(containerInd);
-		}
+	void Insert(T_ind nodeInd, Vector offset, T_ind rootNodeInd = 0) {
+		
 	}
 
 public:
@@ -383,7 +318,7 @@ public:
 	// Should always free when reaching 0 references
 	void Remove(Location location) {
 		if (nodes[containers[location.back()].node].type == Node::Type::helper) {
-			throw E_BoxMapBadRemoval();
+			throw E_BoxSetBadRemoval();
 		}
 
 		for (T_ind i = 1; i + 1 < location.size(); i++) {
@@ -420,7 +355,7 @@ public:
 				for (T_ind childInd = parent.child; childInd != noInd; childInd = containers[childInd].sibling) {
 					Container& childContainer = containers[childInd];
 					if (childContainer.sibling == noInd) {
-						throw E_BoxMapBadLocation();
+						throw E_BoxSetBadLocation();
 					}
 					if (childContainer.sibling == location.back()) {
 						childContainer.sibling = container.sibling;

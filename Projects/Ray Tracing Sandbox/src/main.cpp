@@ -12,39 +12,39 @@ import TR.Graphics.RWArrayResource;
 import FullscreenRenderer;
 import Camera;
 import State;
-import BoxMap;
+import BoxSet;
 
 using namespace TR;
 
-using _BoxMap = BoxMap<float, uint, 3, 128.0f, 2.0f>;
+using _BoxSet = BoxSet<float, uint, 3, 128.0f, 2.0f>;
 
-void Print(_BoxMap& boxMap, uint container, int depth = 0) {
+void Print(_BoxSet& BoxSet, uint container, int depth = 0) {
 	std::string white(depth * 4, ' ');
 
 	std::cout << white << "{ (" << container << ")" << std::endl;
-	_BoxMap::Container& c = boxMap.containers[container];
+	_BoxSet::Container& c = BoxSet.containers[container];
 	std::cout << white << "offset = " << c.offset.ToString() << std::endl;
 	std::cout << white << "node index = " << c.node << std::endl;
 
-	_BoxMap::Node& node = boxMap.nodes[c.node];
+	_BoxSet::Node& node = BoxSet.nodes[c.node];
 	std::cout << white << "size = " << node.size.ToString() << std::endl;
 	std::cout << white << "refCount = " << node.refCount << std::endl;
 
-	if (node.type == _BoxMap::Node::Type::object) {
+	if (node.type == _BoxSet::Node::Type::object) {
 		std::cout << white << "child = " << node.child << std::endl;
 	}
 	else {
 		std::cout << white << "children = [" << std::endl;
-		for (uint childInd = node.child; childInd != _BoxMap::noInd; childInd = boxMap.containers[childInd].sibling) {
-			Print(boxMap, childInd, depth + 1);
+		for (uint childInd = node.child; childInd != _BoxSet::noInd; childInd = BoxSet.containers[childInd].sibling) {
+			Print(BoxSet, childInd, depth + 1);
 		}
 		std::cout << white << "]" << std::endl;
 	}
 	std::cout << white << "}" << std::endl;
 }
 
-void Print(_BoxMap& boxMap) {
-	Print(boxMap, 0);
+void Print(_BoxSet& BoxSet) {
+	Print(BoxSet, 0);
 }
 
 
@@ -53,52 +53,14 @@ int main() {
 	try {
 
 		
-		_BoxMap boxMap = {};
+		_BoxSet BoxSet = {};
 
-		boxMap.Init(1 << 18);
+		BoxSet.Init(1 << 18);
 
-		//boxMap.InsertObject({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 100);
-		//boxMap.InsertObject({ 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, 101);
-		//boxMap.InsertObject({ 2.0f, 2.0f, 2.0f }, { 1.0f, 1.0f, 1.0f }, 102);
-		//boxMap.InsertObject({ 3.0f, 3.0f, 3.0f }, { 1.0f, 1.0f, 1.0f }, 103);
-		
-		//
-		
-
-		//return 0;
-		//boxMap.InsertObject({ 5.0f, 5.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, 1);
-		//boxMap.InsertObject({ 4.5f, 6.5f, -2.5f }, { 1.0f, 1.0f, 1.0f }, 2);
-		//Float3 offset = { 3.0f, 6.0f, -2.0f };
-		//_BoxMap::Location loc = boxMap.InsertObject(offset, { 1.0f, 1.0f, 1.0f }, 3);
-		//boxMap.InsertObject({ -1.0f, 2.0f, 9.0f }, { 1.0f, 1.0f, 1.0f }, 4);
-		//boxMap.InsertObject({ -5.0f, -3.0f, -1.0f }, { 1.0f, 1.0f, 1.0f }, 5);
-		//boxMap.InsertObject({ -4.0f, -2.0f, -1.5f }, { 1.0f, 1.0f, 1.0f }, 6);
-
-		struct Cube {
-			_BoxMap::Location loc = {};
-			Float3 position = {};
-			Float3 dir = {};
-		};
-		std::vector<Cube> cubes((1 << 8));
-
-		{
-			std::default_random_engine randomEngine;
-			std::uniform_real_distribution<float> posDist(-64.0f, 64.0f);
-			std::uniform_real_distribution<float> dirDist(-1.0f, 1.0f);
-			for (int i = 0; i < cubes.size(); i++) {
-				cubes[i].position = { posDist(randomEngine), posDist(randomEngine), posDist(randomEngine) };
-				cubes[i].dir = { dirDist(randomEngine), dirDist(randomEngine), dirDist(randomEngine) };
-				cubes[i].loc = boxMap.InsertObject(cubes[i].position, { 1.0f, 1.0f, 1.0f }, 0);
-				//boxMap.Remove(cubes[i].loc);
-				//cubes[i].loc = boxMap.InsertObject(cubes[i].position, { 1.0f, 1.0f, 1.0f }, 0);
-			}
-		}
-		{
-			//boxMap.Remove(cubes[2].loc);
-			//for (int i = 0; i < cubes.size(); i++) {
-			//	boxMap.Remove(cubes[i].loc);
-			//}
-		}
+		BoxSet.InsertObject({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 0);
+		BoxSet.InsertObject({ 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, 0);
+		BoxSet.InsertObject({ 2.0f, 2.0f, 2.0f }, { 1.0f, 1.0f, 1.0f }, 0);
+		BoxSet.InsertObject({ 3.0f, 3.0f, 3.0f }, { 1.0f, 1.0f, 1.0f }, 0);
 
 		struct Material {
 			Float3 emission = {};
@@ -106,33 +68,16 @@ int main() {
 		std::vector<Material> materials = {
 			{ { 1.0f, 0.0f, 1.0f } }
 		};
-
-		//Print(boxMap);
-		//return 0;
-
-		//for (float x = -16; x <= 16; x += 2.0f) {
-		//	for (float y = -16; y <= 16; y += 2.0f) {
-		//		for (float z = -16; z <= 16; z += 2.0f) {
-		//			boxMap.InsertObject({ x, y, z }, { 0.5f, 0.5f, 0.5f }, 0);
-		//		}
-		//	}
-		//}
-
-		//uint objInd = boxMap.CreateObject();
-		//boxMap.nodes[objInd].size = { 1.0f, 1.0f, 1.0f };
-		//boxMap.nodes[objInd].child = 0;
-		//
-		//boxMap.Insert(objInd, { 1.0f, 1.0f, 1.0f });
 		Graphics::Device::Init();
 
-		Int2 windowSize = { 1920, 1080 };
+		Int2 windowSize = { 1280, 720 };
 
 		Windows::Window::CreateClass("ToRe Window Class", 0);
 		
 		Windows::_Window window = {};
 
 		window.SetClass("ToRe Window Class");
-		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 0, 0 }, windowSize);
+		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, windowSize);
 		RECT windowRect;
 		GetWindowRect(window.window.hwnd, &windowRect);
 		ClipCursor(&windowRect);
@@ -163,15 +108,15 @@ int main() {
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
 
 		Graphics::_ArrayBuffer containerBuffer = {};
-		containerBuffer.Init((UINT)boxMap.containers.elements.size(), sizeof(_BoxMap::Container));
-		containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
+		containerBuffer.Init((UINT)BoxSet.containers.elements.size(), sizeof(_BoxSet::Container));
+		containerBuffer.Upload(&BoxSet.containers.elements[0], cmdList);
 
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["containers"], 1);
 		renderer.inputMap.arrayResources["containers"].gpuAddress = containerBuffer.resource.resource->GetGPUVirtualAddress();
 
 		Graphics::_ArrayBuffer nodeBuffer = {};
-		nodeBuffer.Init((UINT)boxMap.nodes.elements.size(), sizeof(_BoxMap::Node));
-		nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
+		nodeBuffer.Init((UINT)BoxSet.nodes.elements.size(), sizeof(_BoxSet::Node));
+		nodeBuffer.Upload(&BoxSet.nodes.elements[0], cmdList);
 
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["nodes"], 2);
 		renderer.inputMap.arrayResources["nodes"].gpuAddress = nodeBuffer.resource.resource->GetGPUVirtualAddress();
@@ -194,15 +139,9 @@ int main() {
 			camera.Update(cmdList);
 			
 			float delta = deltaClock.Restart().Seconds();
-
-			for (int i = 0; i < cubes.size(); i++) {
-				cubes[i].position += cubes[i].dir * delta;
-				boxMap.Remove(cubes[i].loc);
-				cubes[i].loc = boxMap.InsertObject(cubes[i].position, { 1.0f, 1.0f, 1.0f }, 0);
-			}
 			
-			nodeBuffer.Upload(&boxMap.nodes.elements[0], cmdList);
-			containerBuffer.Upload(&boxMap.containers.elements[0], cmdList);
+			//nodeBuffer.Upload(&BoxSet.nodes.elements[0], cmdList);
+			//containerBuffer.Upload(&BoxSet.containers.elements[0], cmdList);
 
 			graphics.Clear({});
 
