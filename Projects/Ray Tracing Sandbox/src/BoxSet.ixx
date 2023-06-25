@@ -49,6 +49,29 @@ struct BoxSet {
 	using Vector = Array<T_val, numDims>;
 	using Bool = uint;
 
+	struct Box {
+		Vector low = Position(inf), high = Position(-inf);
+		T_val GetSum() {
+			T_val sum = (T_val)0;
+			for (size_t i = 0; i < numDims; i++)
+				sum = std::max(sum, high[i] - low[i]);
+			return sum;
+		}
+		void Fit(Box that) {
+			for (size_t i = 0; i < numDims; i++) {
+				if (that.low[i] < low[i])
+					low[i] = that.low[i];
+				if (that.high[i] > high[i])
+					high[i] = that.high[i];
+			}
+		}
+		Box GetFit(Box that) {
+			Box result = *this;
+			result.Fit(that);
+			return result;
+		}
+	};
+
 	template <typename T>
 	struct List {
 		std::vector<T> elements = {};
@@ -88,8 +111,7 @@ struct BoxSet {
 	// Should probably bring back bounding boxes in nodes, although 'low' will always be 0 in helper nodes
 
 	struct Node {
-		//Vector offset = {};
-		Vector size = {};
+		Box box = {};
 		T_ind child = noInd;
 		enum struct Type {
 			root = 0,
@@ -103,7 +125,6 @@ struct BoxSet {
 		Vector offset = {};
 		T_ind node = noInd;
 		T_ind sibling = noInd;
-		//T_ind parent = noInd; // Temporary
 	};
 
 	List<Node> nodes = {};
@@ -123,7 +144,7 @@ struct BoxSet {
 				return result;
 			}
 			else {
-				return ArrayHash<T_val, numDims>()(node.size) ^ std::hash<T_ind>()(node.child);
+				return ArrayHash<T_val, numDims>()(node.box.low) ^ ArrayHash<T_val, numDims>()(node.box.high) ^ std::hash<T_ind>()(node.child);
 			}
 		}
 	};
@@ -199,27 +220,6 @@ struct BoxSet {
 
 protected:
 
-	struct Box {
-		Vector position;
-		Vector size;
-	};
-
-	Box GetFit(Box parent, Box child) {
-		Vector low, high;
-		for (size_t i = 0; i < numDims; i++) {
-			low[i] = std::min(parent.position[i], child.position[i]);
-			high[i] = std::max(parent.position[i] + parent.size[i], child.position[i] + child.size[i]);
-		}
-		return { low, high - low };
-	}
-
-	T_val GetSum(Vector size) {
-		T_val sum = 0.0f;
-		for (size_t i = 0; i < numDims; i++)
-			sum = std::max(size[i], sum);
-		return sum;
-	}
-
 	void RemoveReference(T_ind nodeInd) {
 		Node& node = nodes[nodeInd];
 		if (node.refCount == 0) {
@@ -227,7 +227,6 @@ protected:
 		}
 		node.refCount--;
 		if (node.type != Node::Type::root && node.refCount == 0) {
-			// Refer to a nodeHash by iterator instead of hashedNodes
 			if (node.type == Node::Type::helper) {
 				for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
 					RemoveReference(containers[childInd].node);
@@ -250,7 +249,7 @@ protected:
 		Node& newNode = nodes[newNodeInd];
 		Node& srcNode = nodes[nodeInd];
 
-		newNode.size = srcNode.size;
+		newNode.box = srcNode.box;
 		newNode.type = Node::Type::helper;
 
 		for (T_ind childInd = srcNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
@@ -262,12 +261,14 @@ protected:
 		return newNodeInd;
 	}
 
-	void SetNodeOffset(T_ind ind, Vector offset) {
+	void FixHelperOffset(T_ind ind) {
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
 		for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
-			containers[childInd].offset -= offset - container.offset;
-		container.offset = offset;
+			containers[childInd].offset -= node.box.low - container.offset;
+		container.offset = node.box.low;
+		node.box.high -= node.box.low;
+		node.box.low = {};
 	}
 
 	void Fit(T_ind rootInd, T_ind nodeInd, Vector& offset) {
@@ -288,7 +289,7 @@ protected:
 
 	// TODO: Add nodes to hashmap
 
-	void CompressLocation(T_ind ind) {
+	void CompressContainer(T_ind ind) {
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
 
@@ -309,7 +310,64 @@ protected:
 	}
 
 	void Insert(T_ind nodeInd, Vector offset, T_ind rootNodeInd = 0) {
-		
+		Node& srcNode = nodes[nodeInd];
+
+		std::vector<T_ind> path = {};
+
+		Vector curOffset = {};
+		float curMaxSum = startSum;
+		for (T_ind curNodeInd = rootNodeInd;;) {
+			Node& curNode = nodes[nodeInd];
+
+			curNode.box.Fit(srcNode.box);
+			if (curNode.type == Node::Type::helper) {
+				FixHelperOffset(curNodeInd);
+			}
+
+			if (srcNode.box.GetSum() <= curMaxSum / divisor) {
+				bool deeper = false;
+				// TODO: Change to go to the lowest sum
+				for (T_ind childInd = curNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
+					Container& childContainer = containers[childInd];
+					Node& child = nodes[childContainer.node];
+					if (child.type != Node::Type::helper)
+						continue;
+					if (child.box.GetFit(srcNode.box).GetSum() > curMaxSum)
+						continue;
+					if (child.refCount > 1) {
+						RemoveReference(childContainer.node);
+						childContainer.node = DuplicateHelper(childContainer.node);
+						nodes[childContainer.node].refCount++;
+					}
+					else {
+						nodeHashMap.erase(child);
+					}
+					path.push_back(childInd);
+					curNodeInd = childContainer.node;
+					curMaxSum /= divisor;
+					curOffset += childContainer.offset;
+					deeper = true;
+					break;
+				}
+				if (deeper)
+					continue;
+				T_ind containerInd = AddChild(curNode);
+				Container& container = containers[containerInd];
+				container.offset = curOffset;
+				container.node = nodes.New();
+				nodes[container.node].refCount++;
+				nodes[container.node].type = Node::Type::helper;
+
+				path.push_back(containerInd);
+				curNodeInd = container.node;
+				curMaxSum /= divisor;
+				curOffset += container.offset;
+			}
+			else {
+
+			}
+		}
+
 	}
 
 public:
