@@ -16,11 +16,15 @@ StructuredBuffer<Container> containers : register(t1);
 #define NODE_TYPE_HELPER 1
 #define NODE_TYPE_OBJECT 2
 
+struct Box {
+    float3 low;
+    float3 high;
+};
+
 struct Node {
-    float3 size;
+    Box box;
     uint child;
     NodeType type;
-    uint refCount;
 };
 StructuredBuffer<Node> nodes : register(t2);
 
@@ -31,11 +35,6 @@ struct TraceResult {
 };
 struct Intersection {
     float sMin, sMax;
-};
-
-struct Box {
-    float3 low;
-    float3 high;
 };
 
 struct Material {
@@ -90,11 +89,7 @@ TraceResult Trace(float3 origin, float3 ray){
             location[curDepth] = curInd;
             origin -= container.offset;
             
-            Box box;
-            box.low = 0.0f;
-            box.high = box.low + node.size;
-            intersection = Intersects(origin, ray, box);
-            
+            intersection = Intersects(origin, ray, node.box);
             if (intersection.sMin != -1.#INF){
                 if (intersection.sMin < result.scale){
                     if (node.type == NODE_TYPE_OBJECT){

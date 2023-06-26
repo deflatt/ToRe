@@ -136,6 +136,11 @@ export namespace TR {
 			result -= that;
 			return result;
 		}
+		Array<T, length> operator-() {
+			Array<T, length> result = *this;
+			result.Negate();
+			return result;
+		}
 
 		Array<T, length>& operator*=(const Array<T, length>& that) {
 			for (size_t i = 0; i < length; i++)
