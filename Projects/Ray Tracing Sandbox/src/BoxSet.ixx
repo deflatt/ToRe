@@ -228,7 +228,7 @@ struct BoxSet {
 		nodeInfo.resize(size);
 		containers.Init(size);
 
-		containers[containers.New()].node = nodes.New();
+		containers[containers.New()].node = CreateRoot();
 		nodeInfo[0].refCount++;
 	}
 
@@ -246,23 +246,35 @@ struct BoxSet {
 		return nodeInd;
 	}
 
-	void InsertObject(Box box, Vector offset, T_ind child, T_ind rootInd = 0) {
-		T_ind nodeInd = CreateObject();
-		nodes[nodeInd].box = box;
-		nodes[nodeInd].child = child;
-		Insert(nodeInd, offset, rootInd);
-	}
-
 protected:
 
-	void RemoveReference(T_ind nodeInd, bool removeRecursive = true) {
+	void RemoveNode(T_ind nodeInd) {
+		Node& node = nodes[nodeInd];
+		if (node.type != Node::Type::object) {
+			for (T_ind childInd = node.child; childInd != noInd;) {
+				Container& childContainer = containers[childInd];
+				T_ind siblingInd = childContainer.sibling;
+
+				if ((--nodeInfo[childContainer.node].refCount) == 0) {
+					nodeHashMap.erase(nodes[childContainer.node]);
+					RemoveNode(childContainer.node);
+				}
+				containers.Remove(childInd);
+				childInd = siblingInd;
+			}
+		}
+		nodes.Remove(nodeInd);
+		nodeInfo[nodeInd] = NodeInfo();
+	}
+
+	/*void RemoveReference(T_ind nodeInd, bool removeRecursive = true) {
 		Node& node = nodes[nodeInd];
 		if (nodeInfo[nodeInd].refCount == 0) {
 			throw E_BoxSetNoReference();
 		}
 		nodeInfo[nodeInd].refCount--;
 		if (node.type != Node::Type::root && nodeInfo[nodeInd].refCount == 0) {
-			if (removeRecursive && node.type == Node::Type::helper) {
+			if (node.type == Node::Type::helper) {
 				for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
 					RemoveReference(containers[childInd].node);
 			}
@@ -270,7 +282,7 @@ protected:
 			    nodeHashMap.erase(node);
 			nodes.Remove(nodeInd);
 		}
-	}
+	}*/
 
 	T_ind AddChild(T_ind parentNodeInd) {
 		Node& parent = nodes[parentNodeInd];
@@ -309,13 +321,14 @@ protected:
 	void CompressContainer(T_ind ind) {
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
-
+		
 		if (node.type == Node::Type::root)
 			return;
 		if (nodeHashMap.count(node)) {
 			T_ind hashInd = nodeHashMap.at(node);
 			if (hashInd != container.node) {
-				RemoveReference(container.node, false);
+				if ((--nodeInfo[container.node].refCount) == 0) // Should always be true (?)
+					RemoveNode(container.node);
 				container.node = hashInd;
 				nodeInfo[container.node].refCount++;
 			}
@@ -350,7 +363,7 @@ protected:
 					if (child.box.GetFit(srcNode.box.GetOffseted(offset - childContainer.offset)).GetSum() > curMaxSum)
 						continue;
 					if (nodeInfo[childContainer.node].refCount > 1) {
-						RemoveReference(childContainer.node);
+						nodeInfo[childContainer.node].refCount--;
 						childContainer.node = DuplicateHelper(childContainer.node);
 						nodeInfo[childContainer.node].refCount++;
 					}
@@ -391,6 +404,21 @@ protected:
 		}
 	}
 
+public:
+
+	void InsertObject(Box box, Vector offset, T_ind child, T_ind rootInd = 0) {
+		T_ind nodeInd = CreateObject();
+		nodes[nodeInd].box = box;
+		nodes[nodeInd].child = child;
+		Insert(nodeInd, offset, rootInd);
+	}
+
+	void InsertRoot(T_ind srcRootNodeInd, Vector offset, T_ind rootInd = 0) {
+		Insert(srcRootNodeInd, offset, rootInd);
+	}
+
+protected:
+
 	bool FindPath(Node srcNode, Vector offset, T_ind curNodeInd, std::vector<T_ind>& path) {
 		for (T_ind childInd = nodes[curNodeInd].child; childInd != noInd; childInd = containers[childInd].sibling) {
 			Container& childContainer = containers[childInd];
@@ -421,12 +449,12 @@ public:
 		if (!FindPath(srcNode, offset, rootNodeInd, path)) {
 			throw E_BoxSetBadLocation();
 		}
-
+		// Decompress path
 		for (T_ind i = 0; i + 1 < path.size(); i++) {
 			Container& container = containers[path[i]];
 			Node& node = nodes[container.node];
 			if (nodeInfo[container.node].refCount > 1) {
-				RemoveReference(container.node);
+				nodeInfo[container.node].refCount--;
 				container.node = DuplicateHelper(container.node);
 				nodeInfo[container.node].refCount++;
 				T_ind newChildInd = nodes[container.node].child;
@@ -442,6 +470,7 @@ public:
 				nodeHashMap.erase(node);
 			}
 		}
+		// Remove node(s)
 		T_ind pathEnd;
 		for (pathEnd = 0; pathEnd < path.size(); pathEnd++) {
 			T_ind containerInd = path[path.size() - 1 - pathEnd];
@@ -471,7 +500,9 @@ public:
 					}
 				}
 			}
-			RemoveReference(container.node);
+			if ((--nodeInfo[container.node].refCount) == 0) {
+				RemoveNode(container.node);
+			}
 			containers.Remove(containerInd);
 			if (parent.child != noInd)
 				break;
@@ -503,6 +534,10 @@ public:
 
 	void RemoveObject(Box box, Vector offset, T_ind child, T_ind rootInd = 0) {
 		Remove({ box, child, Node::Type::object }, offset, rootInd);
+	}
+
+	void RemoveRoot(T_ind srcRootNodeInd, Vector offset, T_ind rootInd = 0) {
+		Remove(nodes[srcRootNodeInd], offset, rootInd);
 	}
 
 };

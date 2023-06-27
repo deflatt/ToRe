@@ -57,13 +57,26 @@ int main() {
 
 		boxSet.Init(1 << 20);
 
-		//boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 0.0f }, 0);
-		//boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 2.0f, 2.0f }, 0);
+		
 		//
 		//Print(boxSet);
 		//return 0;
 
-		struct Cube {
+		uint rootInd = boxSet.CreateRoot();
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 0.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 0.0f, 0.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 2.0f, 0.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 2.0f, 0.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 2.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 0.0f, 2.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 2.0f, 2.0f }, 0, rootInd);
+		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 2.0f, 2.0f }, 0, rootInd);
+
+		boxSet.InsertRoot(rootInd, { 0.0f, 0.0f, 0.0f });
+		float z = 5.0f;
+		boxSet.InsertRoot(rootInd, { 0.0f, 0.0f, z });
+
+		/*struct Cube {
 			_BoxSet::Box box = {};
 			_BoxSet::Vector offset = {};
 			Float3 dir = {};
@@ -80,7 +93,7 @@ int main() {
 
 				boxSet.InsertObject(cubes[i].box, cubes[i].offset, 0);
 			}
-		}
+		}*/
 
 		struct Material {
 			Float3 emission = {};
@@ -161,12 +174,16 @@ int main() {
 			
 			float delta = deltaClock.Restart().Seconds();
 			
-			for (int i = 0; i < cubes.size(); i++) {
+			/*for (int i = 0; i < cubes.size(); i++) {
 				boxSet.RemoveObject(cubes[i].box, cubes[i].offset, 0);
 				cubes[i].offset += cubes[i].dir * delta;
 				boxSet.InsertObject(cubes[i].box, cubes[i].offset, 0);
 			}
-			std::cout << boxSet.containers.nextElement << " " << boxSet.nodes.nextElement << std::endl;
+			std::cout << boxSet.containers.nextElement << " " << boxSet.nodes.nextElement << std::endl;*/
+
+			boxSet.RemoveRoot(rootInd, { 0.0f, 0.0f, z });
+			z += delta;
+			boxSet.InsertRoot(rootInd, { 0.0f, 0.0f, z });
 
 			nodeBuffer.Upload(&boxSet.nodes.elements[0], cmdList);
 			containerBuffer.Upload(&boxSet.containers.elements[0], cmdList);
