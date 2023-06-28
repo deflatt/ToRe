@@ -13,10 +13,11 @@ import FullscreenRenderer;
 import Camera;
 import State;
 import BoxSet;
+import TR.Media.FileDecoder;
 
 using namespace TR;
 
-using _BoxSet = BoxSet<float, uint, 3, 128.0f, 2.0f>;
+using _BoxSet = BoxSet<float, uint, 3, 512.0f, 2.0f>;
 
 void Print(_BoxSet& boxSet, uint container, int depth = 0) {
 	std::string white(depth * 4, ' ');
@@ -52,65 +53,68 @@ int main() {
 
 	try {
 
-		
-		_BoxSet boxSet = {};
-
-		boxSet.Init(1 << 20);
-
-		
-		//
-		//Print(boxSet);
-		//return 0;
-
-		uint rootInd = boxSet.CreateRoot();
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 0.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 0.0f, 0.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 2.0f, 0.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 2.0f, 0.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 2.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 0.0f, 2.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 2.0f, 2.0f }, 0, rootInd);
-		boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { 2.0f, 2.0f, 2.0f }, 0, rootInd);
-
-		boxSet.InsertRoot(rootInd, { 0.0f, 0.0f, 0.0f });
-		float z = 5.0f;
-		boxSet.InsertRoot(rootInd, { 0.0f, 0.0f, z });
-
-		/*struct Cube {
-			_BoxSet::Box box = {};
-			_BoxSet::Vector offset = {};
-			Float3 dir = {};
-		};
-		std::vector<Cube> cubes(1 << 8);
-		{
-			std::default_random_engine randomEngine;
-			std::uniform_real_distribution<float> posDist(-64.0f, 64.0f);
-			std::uniform_real_distribution<float> dirDist(-1.0f, 1.0f);
-			for (int i = 0; i < cubes.size(); i++) {
-				cubes[i].box = { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } };
-				cubes[i].offset = { posDist(randomEngine), posDist(randomEngine), posDist(randomEngine) };
-				cubes[i].dir = { dirDist(randomEngine), dirDist(randomEngine), dirDist(randomEngine) };
-
-				boxSet.InsertObject(cubes[i].box, cubes[i].offset, 0);
-			}
-		}*/
+		Media::FileDecoder::_Context fileDecoder = {};
+		Media::FileDecoder::Init(&fileDecoder, "dirt.png");
+		Media::Frame::_Context dirtFrame = {};
+		Media::FileDecoder::DecodeFrame(&fileDecoder, &dirtFrame, true);
 
 		struct Material {
 			Float3 emission = {};
 		};
-		std::vector<Material> materials = {
-			{ { 1.0f, 0.0f, 1.0f } }
-		};
+		std::vector<Material> materials = {};
+		std::unordered_map<Float4, size_t, ArrayHash<float, 4>> materialMap = {};
+
+		for (int y = 0; y < dirtFrame.size[1]; y++) {
+			for (int x = 0; x < dirtFrame.size[0]; x++) {
+				Byte4* byteCol = (Byte4*)&dirtFrame.data[(y * dirtFrame.size[0] + x) * 4];
+				Float4 col = ((Float4)(*byteCol)) / 255.0f;
+				if (materialMap.count(col))
+					continue;
+				materialMap.insert({ col, materials.size() });
+				materials.push_back({ { col[0], col[1], col[2] } });
+			}
+		}
+
+		_BoxSet boxSet = {};
+		boxSet.Init(1 << 20);
+
+		uint dirtRoot = boxSet.CreateRoot();
+		for (int x = 0; x < 16; x++) {
+			for (int y = 0; y < 16; y++) {
+				for (int z = 0; z < 16; z++) {
+					int px = x, py = y;
+					if (x == 0 || x == 15) {
+						px = y;
+						py = z;
+					}
+					else if (y == 0 || y == 15) {
+						px = x;
+						py = z;
+					}
+					Byte4* byteCol = (Byte4*)&dirtFrame.data[(py * dirtFrame.size[0] + px) * 4];
+					Float4 col = ((Float4)(*byteCol)) / 255.0f;
+					boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { (float)x, (float)y, (float)z }, materialMap.at(col), dirtRoot);
+				}
+			}
+		}
+
+		for (int x = 0; x < 32; x++) {
+			for (int z = 0; z < 32; z++) {
+				boxSet.InsertRoot(dirtRoot, { (float)x * 16.0f, 0.0f, (float)z * 16.0f });
+			}
+		}
+
+
 		Graphics::Device::Init();
 
-		Int2 windowSize = { 1280, 720 };
+		Int2 windowSize = { 1920, 1080 };
 
 		Windows::Window::CreateClass("ToRe Window Class", 0);
 		
 		Windows::_Window window = {};
 
 		window.SetClass("ToRe Window Class");
-		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, windowSize);
+		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 0, 0 }, windowSize);
 		RECT windowRect;
 		GetWindowRect(window.window.hwnd, &windowRect);
 		ClipCursor(&windowRect);
@@ -167,6 +171,8 @@ int main() {
 
 		Clock<float> deltaClock;
 
+		Float3 offset = {};
+		float speed = 10.0f;
 		while (true) {
 			window.HandleMessages();
 
@@ -174,16 +180,23 @@ int main() {
 			
 			float delta = deltaClock.Restart().Seconds();
 			
+			boxSet.RemoveRoot(dirtRoot, offset);
+			if (GetKeyState(VK_LEFT) & 0x8000)
+				offset[2] -= delta * speed;
+			if (GetKeyState(VK_RIGHT) & 0x8000)
+				offset[2] += delta * speed;
+			if (GetKeyState(VK_UP) & 0x8000)
+				offset[1] += delta * speed;
+			if (GetKeyState(VK_DOWN) & 0x8000)
+				offset[1] -= delta * speed;
+			boxSet.InsertRoot(dirtRoot, offset);
+
 			/*for (int i = 0; i < cubes.size(); i++) {
 				boxSet.RemoveObject(cubes[i].box, cubes[i].offset, 0);
 				cubes[i].offset += cubes[i].dir * delta;
 				boxSet.InsertObject(cubes[i].box, cubes[i].offset, 0);
 			}
 			std::cout << boxSet.containers.nextElement << " " << boxSet.nodes.nextElement << std::endl;*/
-
-			boxSet.RemoveRoot(rootInd, { 0.0f, 0.0f, z });
-			z += delta;
-			boxSet.InsertRoot(rootInd, { 0.0f, 0.0f, z });
 
 			nodeBuffer.Upload(&boxSet.nodes.elements[0], cmdList);
 			containerBuffer.Upload(&boxSet.containers.elements[0], cmdList);

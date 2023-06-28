@@ -1,6 +1,6 @@
 #include "Math.hlsli"
 
-#define MAX_LOCATION_SIZE 16
+#define MAX_LOCATION_SIZE 24
 
 static const uint noInd = -1;
 

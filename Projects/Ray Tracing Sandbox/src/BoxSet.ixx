@@ -93,7 +93,7 @@ struct BoxSet {
 		bool operator==(const Box& that) const {
 			return low == that.low && high == that.high;
 		}
-		bool AlmostEquals(const Box& that, float maxError = 1.0f / 256.0f) const {
+		bool AlmostEquals(const Box& that, T_val maxError = 1.0 / 256.0) const {
 			return BoxSet::AlmostEquals(low, that.low) && BoxSet::AlmostEquals(high, that.high);
 		}
 	};
@@ -133,8 +133,6 @@ struct BoxSet {
 	};
 
 	// Indices implicitly point to containers unless otherwise specified
-
-	// Should probably bring back bounding boxes in nodes, although 'low' will always be 0 in helper nodes
 
 	struct Node {
 		Box box = {};
@@ -221,7 +219,6 @@ struct BoxSet {
 
 	using NodeHashMap = std::unordered_map<Node, T_ind, NodeHash, NodeEqualTo>;
 	NodeHashMap nodeHashMap = NodeHashMap(0, NodeHash{ *this }, NodeEqualTo{ *this });
-	//std::vector<Node> hashedNodes = {};
 
 	void Init(T_ind size) {
 		nodes.Init(size);
@@ -266,23 +263,6 @@ protected:
 		nodes.Remove(nodeInd);
 		nodeInfo[nodeInd] = NodeInfo();
 	}
-
-	/*void RemoveReference(T_ind nodeInd, bool removeRecursive = true) {
-		Node& node = nodes[nodeInd];
-		if (nodeInfo[nodeInd].refCount == 0) {
-			throw E_BoxSetNoReference();
-		}
-		nodeInfo[nodeInd].refCount--;
-		if (node.type != Node::Type::root && nodeInfo[nodeInd].refCount == 0) {
-			if (node.type == Node::Type::helper) {
-				for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
-					RemoveReference(containers[childInd].node);
-			}
-			if (removeRecursive)
-			    nodeHashMap.erase(node);
-			nodes.Remove(nodeInd);
-		}
-	}*/
 
 	T_ind AddChild(T_ind parentNodeInd) {
 		Node& parent = nodes[parentNodeInd];
@@ -343,7 +323,7 @@ protected:
 
 		std::vector<T_ind> path = {};
 
-		float curMaxSum = startSum;
+		T_val curMaxSum = startSum;
 		for (T_ind curNodeInd = rootNodeInd;;) {
 			Node& curNode = nodes[curNodeInd];
 			
@@ -353,15 +333,24 @@ protected:
 				FixHelperOffset(path.back());
 			}
 			if (srcNode.box.GetSum() <= curMaxSum / divisor) {
-				bool deeper = false;
-				// TODO: Change to go to the lowest sum
+				T_val minSum = inf;
+				T_ind minSumInd = noInd;
 				for (T_ind childInd = curNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
 					Container& childContainer = containers[childInd];
 					Node& child = nodes[childContainer.node];
 					if (child.type != Node::Type::helper)
 						continue;
-					if (child.box.GetFit(srcNode.box.GetOffseted(offset - childContainer.offset)).GetSum() > curMaxSum)
+					T_val curSum = child.box.GetFit(srcNode.box.GetOffseted(offset - childContainer.offset)).GetSum();
+					if (curSum > curMaxSum)
 						continue;
+					if (curSum < minSum) {
+						minSum = curSum;
+						minSumInd = childInd;
+					}
+				}
+				if (minSumInd != noInd) {
+					Container& childContainer = containers[minSumInd];
+					Node& child = nodes[childContainer.node];
 					if (nodeInfo[childContainer.node].refCount > 1) {
 						nodeInfo[childContainer.node].refCount--;
 						childContainer.node = DuplicateHelper(childContainer.node);
@@ -370,15 +359,12 @@ protected:
 					else {
 						nodeHashMap.erase(child);
 					}
-					path.push_back(childInd);
+					path.push_back(minSumInd);
 					curNodeInd = childContainer.node;
 					offset -= childContainer.offset;
 					curMaxSum /= divisor;
-					deeper = true;
-					break;
-				}
-				if (deeper)
 					continue;
+				}
 				T_ind containerInd = AddChild(curNodeInd);
 				Container& container = containers[containerInd];
 				container.node = nodes.New();

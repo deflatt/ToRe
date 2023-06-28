@@ -42,6 +42,9 @@
     <ProjectReference Include="..\..\Libraries\Graphics\Graphics.vcxproj">
       <Project>{36903ded-f0e2-4cf1-93fa-ac53474b7a52}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\Media\Media.vcxproj">
+      <Project>{bc2b3452-449e-4cd5-9b93-59d3acfc0c9f}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\Libraries\Windows\Windows.vcxproj">
       <Project>{ba89daa3-a8c9-4784-b740-afaa4260762a}</Project>
     </ProjectReference>
