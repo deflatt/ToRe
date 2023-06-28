@@ -25,6 +25,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Graphics", "Libraries\Graph
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ray Tracing Sandbox", "Projects\Ray Tracing Sandbox\Ray Tracing Sandbox.vcxproj", "{F760F680-3376-497C-9C8B-BC1DD70F4DE8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Media", "Libraries\Media\Media.vcxproj", "{BC2B3452-449E-4CD5-9B93-59D3ACFC0C9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -63,6 +65,10 @@ Global
 		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Debug|x64.Build.0 = Debug|x64
 		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Release|x64.ActiveCfg = Release|x64
 		{F760F680-3376-497C-9C8B-BC1DD70F4DE8}.Release|x64.Build.0 = Release|x64
+		{BC2B3452-449E-4CD5-9B93-59D3ACFC0C9F}.Debug|x64.ActiveCfg = Debug|x64
+		{BC2B3452-449E-4CD5-9B93-59D3ACFC0C9F}.Debug|x64.Build.0 = Debug|x64
+		{BC2B3452-449E-4CD5-9B93-59D3ACFC0C9F}.Release|x64.ActiveCfg = Release|x64
+		{BC2B3452-449E-4CD5-9B93-59D3ACFC0C9F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -76,6 +82,7 @@ Global
 		{BA89DAA3-A8C9-4784-B740-AFAA4260762A} = {0A753A91-892B-4151-A967-9CE41856E76B}
 		{36903DED-F0E2-4CF1-93FA-AC53474B7A52} = {0A753A91-892B-4151-A967-9CE41856E76B}
 		{F760F680-3376-497C-9C8B-BC1DD70F4DE8} = {615397A5-CE7D-4348-9306-56D359D027D7}
+		{BC2B3452-449E-4CD5-9B93-59D3ACFC0C9F} = {0A753A91-892B-4151-A967-9CE41856E76B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CE5F6B75-82A6-40BD-85C3-A9A412353009}
