@@ -17,7 +17,7 @@ import TR.Media.FileDecoder;
 
 using namespace TR;
 
-using _BoxSet = BoxSet<float, uint, 3, 512.0f, 2.0f>;
+using _BoxSet = BoxSet<float, uint, 3>;
 
 void Print(_BoxSet& boxSet, uint container, int depth = 0) {
 	std::string white(depth * 4, ' ');
@@ -93,28 +93,31 @@ int main() {
 					}
 					Byte4* byteCol = (Byte4*)&dirtFrame.data[(py * dirtFrame.size[0] + px) * 4];
 					Float4 col = ((Float4)(*byteCol)) / 255.0f;
-					boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { (float)x, (float)y, (float)z }, materialMap.at(col), dirtRoot);
+					boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { (float)x, (float)y, (float)z }, materialMap.at(col), 16.0f, dirtRoot);
 				}
 			}
 		}
 
-		for (int x = 0; x < 32; x++) {
-			for (int z = 0; z < 32; z++) {
-				boxSet.InsertRoot(dirtRoot, { (float)x * 16.0f, 0.0f, (float)z * 16.0f });
+		for (int x = 0; x < 64; x++) {
+			for (int y = 0; y < 16; y++) {
+				for (int z = 0; z < 64; z++) {
+					boxSet.InsertRoot(dirtRoot, { (float)x * 16.0f, (float)y * 16.0f, (float)z * 16.0f }, 1024.0f);
+				}
 			}
+			std::cout << x << std::endl;
 		}
 
 
 		Graphics::Device::Init();
 
-		Int2 windowSize = { 1920, 1080 };
+		Int2 windowSize = { 1280, 720 };
 
 		Windows::Window::CreateClass("ToRe Window Class", 0);
 		
 		Windows::_Window window = {};
 
 		window.SetClass("ToRe Window Class");
-		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 0, 0 }, windowSize);
+		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, windowSize);
 		RECT windowRect;
 		GetWindowRect(window.window.hwnd, &windowRect);
 		ClipCursor(&windowRect);
@@ -180,16 +183,16 @@ int main() {
 			
 			float delta = deltaClock.Restart().Seconds();
 			
-			boxSet.RemoveRoot(dirtRoot, offset);
-			if (GetKeyState(VK_LEFT) & 0x8000)
-				offset[2] -= delta * speed;
-			if (GetKeyState(VK_RIGHT) & 0x8000)
-				offset[2] += delta * speed;
-			if (GetKeyState(VK_UP) & 0x8000)
-				offset[1] += delta * speed;
-			if (GetKeyState(VK_DOWN) & 0x8000)
-				offset[1] -= delta * speed;
-			boxSet.InsertRoot(dirtRoot, offset);
+			//boxSet.RemoveRoot(dirtRoot, offset);
+			//if (GetKeyState(VK_LEFT) & 0x8000)
+			//	offset[2] -= delta * speed;
+			//if (GetKeyState(VK_RIGHT) & 0x8000)
+			//	offset[2] += delta * speed;
+			//if (GetKeyState(VK_UP) & 0x8000)
+			//	offset[1] += delta * speed;
+			//if (GetKeyState(VK_DOWN) & 0x8000)
+			//	offset[1] -= delta * speed;
+			//boxSet.InsertRoot(dirtRoot, offset, 512.0f);
 
 			/*for (int i = 0; i < cubes.size(); i++) {
 				boxSet.RemoveObject(cubes[i].box, cubes[i].offset, 0);

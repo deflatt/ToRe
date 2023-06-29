@@ -41,7 +41,7 @@ struct E_BoxSetNoReference : public _Exception {
 	E_BoxSetNoReference() : _Exception("Cannot remove reference from a non-referenced node.") {}
 };
 
-export template <typename T_val, typename T_ind, size_t numDims, T_val startSum, T_val divisor = (T_val)2>
+export template <typename T_val, typename T_ind, size_t numDims>
 struct BoxSet {
 
 	static constexpr T_ind noInd = (T_ind)-1;
@@ -157,6 +157,8 @@ struct BoxSet {
 		T_ind node = noInd;
 		T_ind sibling = noInd;
 	};
+
+	T_val divisor = (T_val)2;
 
 	List<Node> nodes = {};
 	std::vector<NodeInfo> nodeInfo = {};
@@ -299,6 +301,7 @@ protected:
 	}
 
 	void CompressContainer(T_ind ind) {
+
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
 		
@@ -318,7 +321,7 @@ protected:
 		}
 	}
 
-	void Insert(T_ind nodeInd, Vector offset, T_ind rootNodeInd = 0) {
+	void Insert(T_ind nodeInd, Vector offset, T_val startSum, T_ind rootNodeInd = 0) {
 		Node& srcNode = nodes[nodeInd];
 
 		std::vector<T_ind> path = {};
@@ -392,15 +395,15 @@ protected:
 
 public:
 
-	void InsertObject(Box box, Vector offset, T_ind child, T_ind rootInd = 0) {
+	void InsertObject(Box box, Vector offset, T_ind child, T_val startSum, T_ind rootInd = 0) {
 		T_ind nodeInd = CreateObject();
 		nodes[nodeInd].box = box;
 		nodes[nodeInd].child = child;
-		Insert(nodeInd, offset, rootInd);
+		Insert(nodeInd, offset, startSum, rootInd);
 	}
 
-	void InsertRoot(T_ind srcRootNodeInd, Vector offset, T_ind rootInd = 0) {
-		Insert(srcRootNodeInd, offset, rootInd);
+	void InsertRoot(T_ind srcRootNodeInd, Vector offset, T_val startSum, T_ind rootInd = 0) {
+		Insert(srcRootNodeInd, offset, startSum, rootInd);
 	}
 
 protected:
