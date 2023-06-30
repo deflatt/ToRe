@@ -76,7 +76,7 @@ int main() {
 		}
 
 		_BoxSet boxSet = {};
-		boxSet.Init(1 << 20);
+		boxSet.Init(1 << 22);
 
 		uint dirtRoot = boxSet.CreateRoot();
 		for (int x = 0; x < 16; x++) {
@@ -93,15 +93,17 @@ int main() {
 					}
 					Byte4* byteCol = (Byte4*)&dirtFrame.data[(py * dirtFrame.size[0] + px) * 4];
 					Float4 col = ((Float4)(*byteCol)) / 255.0f;
+					// Why did fewer objects here speed up compression in root insertion?
 					boxSet.InsertObject({ { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, { (float)x, (float)y, (float)z }, materialMap.at(col), 16.0f, dirtRoot);
 				}
 			}
 		}
 
-		for (int x = 0; x < 64; x++) {
-			for (int y = 0; y < 16; y++) {
-				for (int z = 0; z < 64; z++) {
-					boxSet.InsertRoot(dirtRoot, { (float)x * 16.0f, (float)y * 16.0f, (float)z * 16.0f }, 1024.0f);
+		for (int x = 0; x < 128; x++) {
+			for (int y = 0; y < 128; y++) {
+				for (int z = 0; z < 128; z++) {
+					if (rand() % 5 == 0)
+						boxSet.InsertRoot(dirtRoot, { (float)x * 16.0f, (float)y * 16.0f, (float)z * 16.0f }, 10000.0f);
 				}
 			}
 			std::cout << x << std::endl;
@@ -175,7 +177,9 @@ int main() {
 		Clock<float> deltaClock;
 
 		Float3 offset = {};
-		float speed = 10.0f;
+		float speed = 100.0f;
+
+		Clock<double> fpsClock;
 		while (true) {
 			window.HandleMessages();
 
@@ -184,14 +188,18 @@ int main() {
 			float delta = deltaClock.Restart().Seconds();
 			
 			//boxSet.RemoveRoot(dirtRoot, offset);
-			//if (GetKeyState(VK_LEFT) & 0x8000)
-			//	offset[2] -= delta * speed;
-			//if (GetKeyState(VK_RIGHT) & 0x8000)
-			//	offset[2] += delta * speed;
-			//if (GetKeyState(VK_UP) & 0x8000)
+			//if (GetKeyState(VK_NUMPAD8) & 0x8000)
+			//	offset[0] += delta * speed;
+			//if (GetKeyState(VK_NUMPAD2) & 0x8000)
+			//	offset[0] -= delta * speed;
+			//if (GetKeyState(VK_NUMPAD5) & 0x8000)
 			//	offset[1] += delta * speed;
-			//if (GetKeyState(VK_DOWN) & 0x8000)
+			//if (GetKeyState(VK_NUMPAD0) & 0x8000)
 			//	offset[1] -= delta * speed;
+			//if (GetKeyState(VK_NUMPAD6) & 0x8000)
+			//	offset[2] += delta * speed;
+			//if (GetKeyState(VK_NUMPAD4) & 0x8000)
+			//	offset[2] -= delta * speed;
 			//boxSet.InsertRoot(dirtRoot, offset, 512.0f);
 
 			/*for (int i = 0; i < cubes.size(); i++) {
@@ -201,14 +209,17 @@ int main() {
 			}
 			std::cout << boxSet.containers.nextElement << " " << boxSet.nodes.nextElement << std::endl;*/
 
-			nodeBuffer.Upload(&boxSet.nodes.elements[0], cmdList);
-			containerBuffer.Upload(&boxSet.containers.elements[0], cmdList);
+			//nodeBuffer.Upload(&boxSet.nodes.elements[0], cmdList);
+			//containerBuffer.Upload(&boxSet.containers.elements[0], cmdList);
 
 			graphics.Clear({});
 
 			renderer.Render(cmdList);
 
 			graphics.Render();
+
+			while (fpsClock.Elapsed().Seconds() < 1.0 / 60.0);
+			fpsClock.Restart();
 		}
 
 	}

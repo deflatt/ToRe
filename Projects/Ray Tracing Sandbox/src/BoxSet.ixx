@@ -301,7 +301,7 @@ protected:
 	}
 
 	void CompressContainer(T_ind ind) {
-
+		return;
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
 		

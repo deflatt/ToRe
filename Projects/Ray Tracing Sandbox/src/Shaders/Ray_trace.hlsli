@@ -42,14 +42,13 @@ struct Material {
 };
 StructuredBuffer<Material> materials : register(t3);
 
-Intersection Intersects(float3 origin, float3 ray, Box box){
-    float3 invRay = 1.0f / ray;
+Intersection Intersects(float3 origin, float3 invRay, Box box, float3 boxOffset){
     Intersection result;
     result.sMin = -1.#INF;
     result.sMax = 1.#INF;
     [unroll(3)] for (uint i = 0; i < 3; i++){
-        float sdLow = (box.low[i] - origin[i]) * invRay[i];
-        float sdHigh = (box.high[i] - origin[i]) * invRay[i];
+        float sdLow = (boxOffset[i] + box.low[i] - origin[i]) * invRay[i];
+        float sdHigh = (boxOffset[i] + box.high[i] - origin[i]) * invRay[i];
         result.sMin = max(result.sMin, min(sdLow, sdHigh));
         result.sMax = min(result.sMax, max(sdLow, sdHigh));
     }
@@ -62,6 +61,8 @@ Intersection Intersects(float3 origin, float3 ray, Box box){
 }
 
 TraceResult Trace(float3 origin, float3 ray){
+    const float3 invRay = 1.0f / ray;
+    
     TraceResult result;
     result.scale = 1.#INF;
     result.depth = 0;
@@ -69,55 +70,68 @@ TraceResult Trace(float3 origin, float3 ray){
     Container container;
     Node node;
     Intersection intersection;
-    uint curInd = 0;
-    //float3 curOffset = 0.0f;
     bool newContainer = true;
     
     uint location[MAX_LOCATION_SIZE];
+    location[0] = 0;
     uint curDepth = 0;
+    
+    float3 curOffset = 0.0f;
     
     [loop] while (true) {
         if (curDepth == MAX_LOCATION_SIZE)
             break;
         if (curDepth > result.depth)
             result.depth = curDepth;
+        
+        uint curInd = location[curDepth];
+        
         container = containers[curInd];
         node = nodes[container.node];
         
         if (newContainer) {
-            //curOffset += container.offset;
-            location[curDepth] = curInd;
-            origin -= container.offset;
-            
-            intersection = Intersects(origin, ray, node.box);
-            if (intersection.sMin != -1.#INF){
-                if (intersection.sMin < result.scale){
-                    if (node.type == NODE_TYPE_OBJECT){
-                        result.scale = intersection.sMin;
-                        result.ind = node.child;
-                    }
-                    else {
-                        curInd = node.child;
-                        newContainer = true;
-                        
-                        curDepth++;
-                        continue;
-                    }
+            //origin -= container.offset;
+            curOffset += container.offset;
+        }
+        
+        float minScale = -1.#INF;
+        if (!newContainer)
+            minScale = Intersects(origin, invRay, nodes[containers[location[curDepth + 1]].node].box, curOffset + containers[location[curDepth + 1]].offset).sMin;
+        float maxScale = result.scale;
+        
+        uint nextInd = noInd;
+        [loop] for (uint childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling){
+            intersection = Intersects(origin, invRay, nodes[containers[childInd].node].box, curOffset + containers[childInd].offset);
+            if (intersection.sMin == -1.#INF)
+                continue;
+            if (intersection.sMin < minScale || intersection.sMin > maxScale)
+                continue;
+            if (intersection.sMin == minScale && (!newContainer && childInd <= location[curDepth + 1]))
+                continue;
+            if (intersection.sMin == maxScale && nextInd != noInd && childInd > nextInd)
+                continue;
+            if (nodes[containers[childInd].node].type == NODE_TYPE_OBJECT) {
+                if (intersection.sMin < result.scale) {
+                    result.scale = intersection.sMin;
+                    result.ind = nodes[containers[childInd].node].child;
                 }
+                continue;
             }
+            maxScale = intersection.sMin;
+            nextInd = childInd;
         }
-        //curOffset -= container.offset;
-        origin += container.offset;
-        if (container.sibling != noInd) {
-            curInd = container.sibling;
+        if (nextInd != noInd) {
+            location[curDepth + 1] = nextInd;
             newContainer = true;
-            continue;
+            curDepth++;
         }
-        if (curDepth == 0)
-            break;
-        curInd = location[curDepth - 1];
-        newContainer = false;
-        curDepth--;
+        else {
+            if (curDepth == 0)
+                break;
+            newContainer = false;
+            curOffset -= container.offset;
+            curDepth--;
+        }
     }
     return result;
 }
