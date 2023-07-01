@@ -34,6 +34,7 @@ export namespace TR::Media {
 
 		void Scale(_Context* scaler, const Frame::_Context* src, Frame::_Context* dst);
 		void Scale(_Context* scaler, const AVFrame* src, Frame::_Context* dst);
+		void Scale(_Context* scaler, const Frame::_Context* src, const AVFrame* dst);
 
 		void Release(_Context* scaler);
 

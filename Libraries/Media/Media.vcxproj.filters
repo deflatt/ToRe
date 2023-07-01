@@ -11,6 +11,9 @@
     <Filter Include="Source Files\Utilities">
       <UniqueIdentifier>{4651ccd7-0c55-4238-8b65-a8b139503973}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Encoding">
+      <UniqueIdentifier>{569f1f15-8ba1-446b-82fa-4a1be95eafb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\FileDecoder.ixx">
@@ -33,6 +36,12 @@
     </ClCompile>
     <ClCompile Include="src\Exception.ixx">
       <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Encoder.ixx">
+      <Filter>Source Files\Encoding</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Encoder.cpp">
+      <Filter>Source Files\Encoding</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

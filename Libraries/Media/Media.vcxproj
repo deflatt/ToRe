@@ -11,6 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Encoder.cpp" />
+    <ClCompile Include="src\Encoder.ixx" />
     <ClCompile Include="src\Exception.ixx" />
     <ClCompile Include="src\FileDecoder.cpp" />
     <ClCompile Include="src\FileDecoder.ixx" />

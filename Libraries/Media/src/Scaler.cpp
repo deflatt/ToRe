@@ -56,6 +56,18 @@ namespace TR::Media {
 			}
 		}
 
+		void TR::Media::Scaler::Scale(_Context* scaler, const Frame::_Context* src, const AVFrame* dst)
+		{
+			if (!IsInitialized(scaler, src->size, { dst->width, dst->height }, src->format, (AVPixelFormat)dst->format, scaler->algorithm)) {
+				Release(scaler);
+				Init(scaler, src->size, { dst->width, dst->height }, src->format, (AVPixelFormat)dst->format, scaler->algorithm);
+			}
+			int ret = sws_scale(scaler->swsContext, &src->data, scaler->srcLinesize, 0, scaler->srcSize[1], dst->data, dst->linesize);
+			if (ret < 0) {
+				throw E_FailedScaling(ret);
+			}
+		}
+
 		void Release(_Context* scaler)
 		{
 			if (scaler->swsContext) {
