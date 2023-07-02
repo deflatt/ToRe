@@ -2,7 +2,7 @@ module;
 
 #include "MediaHeader.h"
 
-module Encoder;
+module TR.Media.Encoder;
 
 namespace TR::Media {
 
@@ -55,9 +55,39 @@ namespace TR::Media {
 			encoder->frameIndex = 0;
 		}
 
+		void Encode(_Context* encoder, const AVFrame* frame, Procedure<const byte*, int> packetHandler)
+		{
+			int ret;
+
+			ret = avcodec_send_frame(encoder->codecContext, frame);
+			if (ret < 0) {
+				throw E_FailedFrameSend(ret);
+			}
+
+			while (ret >= 0) {
+				ret = avcodec_receive_packet(encoder->codecContext, encoder->avPacket);
+				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+					encoder->frameIndex++;
+					break;
+				}
+				if (ret < 0) {
+					throw E_FailedPacketReceival(ret);
+				}
+				packetHandler(encoder->avPacket->data, encoder->avPacket->size);
+				av_packet_unref(encoder->avPacket);
+			}
+		}
+
 		void EncodeFrame(_Context* encoder, const Frame::_Context* frame, Procedure<const byte*, int> packetHandler)
 		{
-			
+			Scaler::Scale(&encoder->scaler, frame, encoder->avFrame);
+			encoder->avFrame->pts = encoder->frameIndex;
+			Encode(encoder, encoder->avFrame, packetHandler);
+		}
+
+		void Flush(_Context* encoder, Procedure<const byte*, int> packetHandler)
+		{
+			Encode(encoder, nullptr, packetHandler);
 		}
 
 	}

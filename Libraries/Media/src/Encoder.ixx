@@ -2,7 +2,7 @@ module;
 
 #include "MediaHeader.h"
 
-export module Encoder;
+export module TR.Media.Encoder;
 
 export import TR.Media.Exception;
 export import TR.Media.Scaler;
@@ -25,6 +25,12 @@ export namespace TR::Media {
 		struct E_FailedCodecContextOpening : public _MediaException {
 			E_FailedCodecContextOpening(int returnValue) : _MediaException("Failed to open codec context.", returnValue) {}
 		};
+		struct E_FailedFrameSend : public _MediaException {
+			E_FailedFrameSend(int returnValue) : _MediaException("Failed to send frame to codec.", returnValue) {}
+		};
+		struct E_FailedPacketReceival : public _MediaException {
+			E_FailedPacketReceival(int returnValue) : _MediaException("Failed to receive packet from codec.", returnValue) {}
+		};
 
 		struct _Context {
 			const AVCodec* codec = nullptr;
@@ -45,6 +51,9 @@ export namespace TR::Media {
 		void Init(_Context* encoder, AVCodecID codecID, AVPixelFormat dstFormat, Int2 dstSize, int framerate, int bitrate, int gopSize = 10, int maxBframes = 2, std::vector<Option> opts = {});
 
 		void EncodeFrame(_Context* encoder, const Frame::_Context* frame, Procedure<const byte*, int> packetHandler);
+
+		void Encode(_Context* encoder, const AVFrame* frame, Procedure<const byte*, int> packetHandler);
+		void Flush(_Context* encoder, Procedure<const byte*, int> packetHandler);
 
 	}
 

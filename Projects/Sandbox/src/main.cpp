@@ -1,5 +1,6 @@
 #include <iostream>
 #include <Windows.h>
+#include <fstream>
 #undef CreateWindow
 
 import TR.Windows.Window;
@@ -16,6 +17,7 @@ import TR.Windows.MouseListener;
 import TR.Windows.RawMouseListener;
 import TR.Windows.RawKeyboardListener;
 import TR.Media.FileDecoder;
+import TR.Media.Encoder;
 
 using namespace TR;
 
@@ -23,14 +25,27 @@ int main() {
 
 	try {
 
-		Media::FileDecoder::_Context fileDecoder = {};
-		Media::FileDecoder::Init(&fileDecoder, "pic.png");
-		Media::Frame::_Context frame = {};
-		Media::FileDecoder::DecodeFrame(&fileDecoder, &frame, true);
-		std::cout << frame.size.ToString() << std::endl;
-		for (int i = 0; i < 4; i++)
-			std::cout << (int)frame.data[i] << " ";
+		Media::Encoder::_Context encoder = {};
+		Media::Encoder::Init(&encoder, AV_CODEC_ID_H264, AV_PIX_FMT_YUV420P, { 1280, 720 }, 60, 10'000'000);
 
+		std::ofstream ofile("out.mp4", std::ios::binary);
+		Procedure<const byte*, int> packetHandler = [&ofile](const byte* data, int length) {
+			ofile.write((const char*)data, length);
+		};
+		Media::Frame::_Context frame = {};
+		Media::Frame::Allocate(&frame, { 1280, 720 }, AV_PIX_FMT_RGBA);
+		for (int y = 0; y < 720; y++) {
+			for (int x = 0; x < 1280; x++) {
+				frame.data[(y * 1280 + x) * 4] = 0;
+				frame.data[(y * 1280 + x) * 4 + 1] = 255;
+				frame.data[(y * 1280 + x) * 4 + 2] = 255;
+				frame.data[(y * 1280 + x) * 4 + 3] = 255;
+			}
+		}
+
+		for (int i = 0; i < 240; i++)
+			Media::Encoder::EncodeFrame(&encoder, &frame, packetHandler);
+		Media::Encoder::Flush(&encoder, packetHandler);
 	
 	}
 	catch (Graphics::_D3D12Exception e) {
