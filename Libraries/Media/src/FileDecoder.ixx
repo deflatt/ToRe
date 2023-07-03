@@ -55,6 +55,8 @@ export namespace TR::Media {
 
 		bool DecodeFrame(_Context* fileDecoder, Frame::_Context* dstFrame, bool allocateFrame = false, int scalingAlgorithm = SWS_BICUBIC);
 
+		void Release(_Context* fileDecoder);
+
 	}
 
 }

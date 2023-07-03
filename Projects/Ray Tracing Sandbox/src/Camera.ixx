@@ -28,7 +28,7 @@ export struct Camera {
 		float aspectRatio = 1.0f;
 	} info = {};
 
-	float speed = 100.0f;
+	float speed = 5.0f;
 	float acceleration = 10.0f;
 	float sensitivity = 0.001f;
 

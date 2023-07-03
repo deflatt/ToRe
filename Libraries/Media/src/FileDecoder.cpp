@@ -96,6 +96,28 @@ namespace TR::Media {
 			return true;
 		}
 
+		void Release(_Context* fileDecoder)
+		{
+			if (fileDecoder->codecContext) {
+				avcodec_free_context(&fileDecoder->codecContext);
+				fileDecoder->codecContext = nullptr;
+			}
+			if (fileDecoder->formatContext) {
+				avformat_close_input(&fileDecoder->formatContext);
+				avformat_free_context(fileDecoder->formatContext);
+				fileDecoder->formatContext = nullptr;
+			}
+			if (fileDecoder->avFrame) {
+				av_frame_free(&fileDecoder->avFrame);
+				fileDecoder->avFrame = nullptr;
+			}
+			if (fileDecoder->avPacket) {
+				av_packet_free(&fileDecoder->avPacket);
+				fileDecoder->avPacket = nullptr;
+			}
+			Scaler::Release(&fileDecoder->scaler);
+		}
+
 	}
 
 }

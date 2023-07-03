@@ -39,5 +39,5 @@ float4 main(VSOutput vsOutput) : SV_TARGET
     if (t.scale == 1.#INF)
         return 0.0f;
     else
-        return float4(materials[t.ind].emission * (1.0f / (1.0f + 0.1f * sqrt(t.scale))), 1.0f);
+        return float4(materials[t.ind].emission * (1.0f / (1.0f + sqrt(t.scale))), 1.0f);
 }
