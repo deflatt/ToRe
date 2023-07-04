@@ -164,6 +164,21 @@ struct BoxSet {
 	std::vector<NodeInfo> nodeInfo = {};
 	List<Container> containers = {};
 
+	// Potentially going to be used if containers should be sorted to optimize equality checks
+	struct ContainerLess {
+		bool operator()(const Container& first, const Container& second) {
+			if (first.node == second.node) {
+				for (size_t i = 0; i < numDims; i++) {
+					if (first.offset[i] == second.offset[i])
+						continue;
+					return first.offset[i] < second.offset[i];
+				}
+				return true;
+			}
+			return first.node < second.node;
+		}
+	};
+
 	struct NodeHash {
 		BoxSet& boxSet;
 
@@ -185,33 +200,41 @@ struct BoxSet {
 
 	struct NodeEqualTo {
 
-		struct OffsetNode {
-			Vector offset = {};
-			T_ind node = noInd;
-
-			struct Hash {
-				size_t operator()(const OffsetNode& node) const {
-					return ArrayHash<T_val, numDims>()(node.offset) ^ std::hash<T_ind>()(node.node);
-				}
-			};
-
-			bool operator==(const OffsetNode& that) const {
-				return offset == that.offset && node == that.node;
-			}
-		};
-
 		BoxSet& boxSet;
 
 		bool operator()(const Node& first, const Node& second) const {
 			if (first.type != second.type)
 				return false;
 			if (first.type == Node::Type::helper) {
-				std::unordered_set<OffsetNode, OffsetNode::Hash> firstSet, secondSet;
-				for (T_ind childInd = first.child; childInd != noInd; childInd = boxSet.containers[childInd].sibling)
-					firstSet.insert({ boxSet.containers[childInd].offset, boxSet.containers[childInd].node });
-				for (T_ind childInd = second.child; childInd != noInd; childInd = boxSet.containers[childInd].sibling)
-					secondSet.insert({ boxSet.containers[childInd].offset, boxSet.containers[childInd].node });
-				return firstSet == secondSet;
+				T_ind numChildren = 0;
+				for (T_ind firstChild = first.child; firstChild != noInd; firstChild = boxSet.containers[firstChild].sibling)
+					numChildren++;
+				{
+					T_ind secondSize = 0;
+					for (T_ind secondChild = second.child; secondChild != noInd; secondChild = boxSet.containers[secondChild].sibling)
+						secondSize++;
+					if (secondSize != numChildren)
+						return false;
+				}
+				std::vector<bool> used(numChildren, false);
+
+				for (T_ind firstChild = first.child; firstChild != noInd; firstChild = boxSet.containers[firstChild].sibling) {
+					T_ind ind = 0;
+					for (T_ind secondChild = second.child; secondChild != noInd; secondChild = boxSet.containers[secondChild].sibling) {
+						if (used[ind]) {
+							ind++;
+							continue;
+						}
+						if (boxSet.containers[firstChild].node == boxSet.containers[secondChild].node
+							&& boxSet.containers[firstChild].offset == boxSet.containers[secondChild].offset)
+							break;
+						ind++;
+					}
+					if (ind == numChildren)
+						return false;
+					used[ind] = true;
+				}
+				return true;
 			}
 			else {
 				return first.box == second.box && first.child == second.child;
@@ -301,7 +324,6 @@ protected:
 	}
 
 	void CompressContainer(T_ind ind) {
-		return;
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
 		

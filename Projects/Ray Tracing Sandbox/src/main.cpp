@@ -68,6 +68,13 @@ struct MaterialBoxSet {
 
 };
 
+float Dist(Float3 a, Float3 b) {
+	float sum = 0.0f;
+	for (size_t i = 0; i < 3; i++)
+		sum += (a[i] - b[i]) * (a[i] - b[i]);
+	return sqrtf(sum);
+}
+
 struct BlockBoxSet {
 
 	MaterialBoxSet materialBoxSet = {};
@@ -106,6 +113,7 @@ struct BlockBoxSet {
 					MaterialBoxSet::Material material = {};
 					material.emission = (Float3)byteCol / 255.0f;
 
+					if (Dist(pos, (Float3)0.5f) <= 0.5f)
 					materialBoxSet.boxSet.InsertObject({ {}, size }, pos, materialBoxSet.GetMaterial(material), 1.0f, rootInd);
 				}
 			}
@@ -168,7 +176,7 @@ int main() {
 		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
 
 		BlockBoxSet blocks = {};
-		blocks.Init(1 << 16, 1 << 14);
+		blocks.Init(1 << 20, 1 << 14);
 
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["containers"], 1);
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["nodes"], 2);
@@ -183,30 +191,59 @@ int main() {
 		blocks.LoadBlock("sand", "sand.png");
 		blocks.LoadBlock("stone", "stone.png");
 
-		for (int x = 0; x < 16; x++) {
-			for (int z = 0; z < 16; z++) {
+		for (int x = 0; x < 128; x++) {
+			for (int z = 0; z < 128; z++) {
 				blocks.InsertBlock("stone", { (float)x, 0.0f, (float)z });
-				blocks.InsertBlock("dirt", { (float)x, 1.0f, (float)z });
+				blocks.InsertBlock("stone", { (float)x, 1.0f, (float)z });
+				blocks.InsertBlock("dirt", { (float)x, 2.0f, (float)z });
 			}
+			std::cout << x << std::endl;
 		}
-		blocks.InsertBlock("sand", { 8.0f, 2.0f, 7.0f });
-		blocks.InsertBlock("sand", { 8.0f, 2.0f, 8.0f });
-		blocks.InsertBlock("sand", { 8.0f, 2.0f, 9.0f });
+		blocks.InsertBlock("sand", { 8.0f, 3.0f, 7.0f });
 		blocks.InsertBlock("sand", { 8.0f, 3.0f, 8.0f });
+		blocks.InsertBlock("sand", { 8.0f, 3.0f, 9.0f });
 		blocks.InsertBlock("sand", { 8.0f, 4.0f, 8.0f });
 		blocks.InsertBlock("sand", { 8.0f, 5.0f, 8.0f });
+		blocks.InsertBlock("sand", { 8.0f, 6.0f, 8.0f });
 
 		State::Init(window.window.hwnd);
 	
 		Clock<float> deltaClock;
 	
-		Float3 offset = {};
-		float speed = 100.0f;
+		Float3 offset = { 5.0f, 5.0f, 5.0f };
+		blocks.InsertBlock("sand", offset);
+
+		float speed = 2.0f;
 	
 		Clock<double> fpsClock;
 		while (true) {
 			window.HandleMessages();
-	
+			
+			float deltaTime = deltaClock.Restart().Seconds();
+
+			blocks.RemoveBlock("sand", offset);
+			if (GetKeyState(VK_LEFT) & 0x8000) {
+				offset[2] -= speed * deltaTime;
+			}
+			if (GetKeyState(VK_RIGHT) & 0x8000) {
+				offset[2] += speed * deltaTime;
+			}
+			if (GetKeyState(VK_UP) & 0x8000) {
+				offset[1] += speed * deltaTime;
+			}
+			if (GetKeyState(VK_DOWN) & 0x8000) {
+				offset[1] -= speed * deltaTime;
+			}
+			if (GetKeyState(VK_NUMPAD8) & 0x8000) {
+				offset[0] += speed * deltaTime;
+			}
+			if (GetKeyState(VK_NUMPAD2) & 0x8000) {
+				offset[0] -= speed * deltaTime;
+			}
+			blocks.InsertBlock("sand", offset);
+
+			std::cout << blocks.materialBoxSet.boxSet.containers.nextElement << std::endl;
+
 			camera.Update(cmdList);
 			
 			blocks.materialBoxSet.Update(cmdList);
