@@ -1,5 +1,6 @@
 #include <random>
 #include <iostream>
+#include <fstream>
 #include <Windows.h>
 #undef CreateWindow
 
@@ -95,12 +96,15 @@ struct BlockBoxSet {
 
 		uint rootInd = materialBoxSet.boxSet.CreateRoot();
 
+		std::default_random_engine randomEngine = {};
+		std::uniform_int_distribution<int> distX(0, frame.size[0] - 1), distY(0, frame.size[1] - 1);
+
 		for (int x = 0; x < frame.size[0]; x++){
 			for (int y = 0; y < frame.size[1]; y++) {
 				for (int z = 0; z < frame.size[0]; z++) {
 					Float3 pos = { (float)x / (float)frame.size[0], (float)y / (float)frame.size[1], (float)z / (float)frame.size[0] };
 					Float3 size = { 1.0f / (float)frame.size[0], 1.0f / (float)frame.size[1], 1.0f / (float)frame.size[0] };
-					int px = x, py = y;
+					int px, py;
 					if (x == 0 || x + 1 == frame.size[0]) {
 						px = y;
 						py = z;
@@ -109,11 +113,21 @@ struct BlockBoxSet {
 						px = x;
 						py = z;
 					}
+					else if (z == 0 || z + 1 == frame.size[0]) {
+						px = x;
+						py = y;
+					}
+					else {
+						px = distX(randomEngine);
+						py = distY(randomEngine);
+					}
 					Byte3 byteCol = *(Byte3*)&frame.data[(py * frame.size[0] + px) * 4];
+					byte alpha = frame.data[(py * frame.size[0] + px) * 4 + 3];
+					if (alpha == 0)
+						continue;
 					MaterialBoxSet::Material material = {};
 					material.emission = (Float3)byteCol / 255.0f;
 
-					if (Dist(pos, (Float3)0.5f) <= 0.5f)
 					materialBoxSet.boxSet.InsertObject({ {}, size }, pos, materialBoxSet.GetMaterial(material), 1.0f, rootInd);
 				}
 			}
@@ -190,21 +204,38 @@ int main() {
 		blocks.LoadBlock("dirt", "dirt.png");
 		blocks.LoadBlock("sand", "sand.png");
 		blocks.LoadBlock("stone", "stone.png");
+		blocks.LoadBlock("grass_block", "grass_block_top.png");
+		blocks.LoadBlock("acacia_log", "acacia_log.png");
+		blocks.LoadBlock("acacia_leaves", "acacia_leaves.png");
+		blocks.LoadBlock("oak_leaves", "oak_leaves.png");
+		blocks.LoadBlock("oak_log", "oak_log.png");
+		blocks.LoadBlock("gravel", "gravel.png");
 
-		for (int x = 0; x < 128; x++) {
-			for (int z = 0; z < 128; z++) {
-				blocks.InsertBlock("stone", { (float)x, 0.0f, (float)z });
-				blocks.InsertBlock("stone", { (float)x, 1.0f, (float)z });
-				blocks.InsertBlock("dirt", { (float)x, 2.0f, (float)z });
+		{
+			std::ifstream ifile("savanna_100x40x100.mcw");
+			Int3 origin, size;
+			for (size_t i = 0; i < 3; i++) {
+				ifile >> origin[i] >> size[i];
 			}
-			std::cout << x << std::endl;
+			std::unordered_set<std::string> blockTypes;
+			for (int x = 0; x < size[0]; x++) {
+				for (int y = 0; y < size[1]; y++) {
+					for (int z = 0; z < size[2]; z++) {
+						std::string type;
+						ifile >> type;
+						if (!blockTypes.count(type)) {
+							std::cout << "New block type: " << type << std::endl;
+							blockTypes.insert(type);
+						}
+						if (blocks.blockMap.count(type)) {
+							blocks.InsertBlock(type, { (float)x, (float)y, (float)z });
+						}
+					}
+				}
+			}
+			ifile.close();
 		}
-		blocks.InsertBlock("sand", { 8.0f, 3.0f, 7.0f });
-		blocks.InsertBlock("sand", { 8.0f, 3.0f, 8.0f });
-		blocks.InsertBlock("sand", { 8.0f, 3.0f, 9.0f });
-		blocks.InsertBlock("sand", { 8.0f, 4.0f, 8.0f });
-		blocks.InsertBlock("sand", { 8.0f, 5.0f, 8.0f });
-		blocks.InsertBlock("sand", { 8.0f, 6.0f, 8.0f });
+		blocks.InsertBlock("dirt", {});
 
 		State::Init(window.window.hwnd);
 	
@@ -213,7 +244,7 @@ int main() {
 		Float3 offset = { 5.0f, 5.0f, 5.0f };
 		blocks.InsertBlock("sand", offset);
 
-		float speed = 2.0f;
+		float speed = 5.0f;
 	
 		Clock<double> fpsClock;
 		while (true) {
@@ -241,8 +272,6 @@ int main() {
 				offset[0] -= speed * deltaTime;
 			}
 			blocks.InsertBlock("sand", offset);
-
-			std::cout << blocks.materialBoxSet.boxSet.containers.nextElement << std::endl;
 
 			camera.Update(cmdList);
 			
