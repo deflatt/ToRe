@@ -25,7 +25,7 @@ export struct Camera {
 		Float3 position = {};
 		Float2 rotation = {};
 		float fov = 3.14f / 2.0f;
-		float aspectRatio = 1.0f;
+		Uint2 windowSize = {};
 	} info = {};
 
 	float speed = 15.0f;
@@ -44,9 +44,6 @@ export struct Camera {
 
 	void Init(Graphics::InputParameter::Map::_Context* inputMap) {
 		buffer.Init(1, sizeof(Info));
-		
-		Graphics::InputParameter::Init(&inputMap->arrayResources["camera"], 0);
-		inputMap->arrayResources["camera"].gpuAddress = buffer.resource.resource->GetGPUVirtualAddress();
 		
 		Procedure<Windows::Input::_RawMouseMoveEvent*> mouseMoveListener = [this](Windows::Input::_RawMouseMoveEvent* e) {
 			if (!State::active)

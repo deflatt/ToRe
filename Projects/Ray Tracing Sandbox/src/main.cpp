@@ -24,13 +24,14 @@ struct MaterialBoxSet {
 
 	struct Material {
 		Float3 emission = {};
+		Float3 reflection = {};
 		struct Hash {
 			size_t operator()(const Material& material) const {
-				return ArrayHash<float, 3>()(material.emission);
+				return ArrayHash<float, 3>()(material.emission) ^ ArrayHash<float, 3>()(material.reflection);
 			}
 		};
 		bool operator==(const Material& that) const {
-			return emission == that.emission;
+			return emission == that.emission && reflection == that.reflection;
 		}
 	};
 	std::vector<Material> materials = {};
@@ -126,7 +127,8 @@ struct BlockBoxSet {
 					if (alpha == 0)
 						continue;
 					MaterialBoxSet::Material material = {};
-					material.emission = (Float3)byteCol / 255.0f;
+					material.reflection = (Float3)byteCol / 255.0f;
+					material.emission = {};
 
 					materialBoxSet.boxSet.InsertObject({ {}, size }, pos, materialBoxSet.GetMaterial(material), 1.0f, rootInd);
 				}
@@ -137,7 +139,7 @@ struct BlockBoxSet {
 	}
 
 	void InsertBlock(std::string name, Float3 position) {
-		materialBoxSet.boxSet.InsertRoot(blockMap.at(name), position, 1024.0f);
+		materialBoxSet.boxSet.InsertRoot(blockMap.at(name), position, 128.0f);
 	}
 
 	void RemoveBlock(std::string name, Float3 position) {
@@ -152,14 +154,14 @@ int main() {
 	
 		Graphics::Device::Init();
 	
-		Int2 windowSize = { 1280, 720 };
+		Int2 windowSize = { 1920, 1080 };
 	
 		Windows::Window::CreateClass("ToRe Window Class", 0);
 		
 		Windows::_Window window = {};
 	
 		window.SetClass("ToRe Window Class");
-		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 100, 100 }, windowSize);
+		window.CreateWindow("ToRe Sandbox", WS_POPUP | WS_VISIBLE, 0, { 0, 0 }, windowSize);
 		RECT windowRect;
 		GetWindowRect(window.window.hwnd, &windowRect);
 		ClipCursor(&windowRect);
@@ -187,19 +189,59 @@ int main() {
 	
 		Camera camera = {};
 		camera.Init(&renderer.inputMap);
-		camera.info.aspectRatio = (float)windowSize[1] / (float)windowSize[0];
+		camera.info.windowSize = windowSize;
 
 		BlockBoxSet blocks = {};
 		blocks.Init(1 << 20, 1 << 14);
 
+		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["camera"], 0);
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["containers"], 1);
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["nodes"], 2);
 		Graphics::InputParameter::Init(&renderer.inputMap.arrayResources["materials"], 3);
+		renderer.inputMap.arrayResources["camera"].gpuAddress = camera.buffer.resource.resource->GetGPUVirtualAddress();
 		renderer.inputMap.arrayResources["containers"].gpuAddress = blocks.materialBoxSet.containerBuffer.resource.resource->GetGPUVirtualAddress();
 		renderer.inputMap.arrayResources["nodes"].gpuAddress = blocks.materialBoxSet.nodeBuffer.resource.resource->GetGPUVirtualAddress();
 		renderer.inputMap.arrayResources["materials"].gpuAddress = blocks.materialBoxSet.materialBuffer.resource.resource->GetGPUVirtualAddress();
 
+		struct PixelInfo {
+			uint ind;
+			Float3 pos;
+			Float3 normal;
+			Float3 incomingLight;
+		};
+		Graphics::_RWArrayBuffer pixelInfoBuffer = {};
+		pixelInfoBuffer.Init(windowSize[0] * windowSize[1], sizeof(PixelInfo));
+
+		Graphics::InputParameter::Init(&renderer.inputMap.rwArrayResources["pixelInfo"], 1);
+		renderer.inputMap.rwArrayResources["pixelInfo"].gpuAddress = pixelInfoBuffer.resource.resource->GetGPUVirtualAddress();
+
 		renderer.Init((Long2)windowSize, cmdList);
+
+		std::cout << "Initialized renderer" << std::endl;
+
+		_FullscreenRenderer denoiser = {};
+
+		Graphics::_Shader denoiseVS = {};
+		denoiseVS.compiler.profile = "vs_6_6";
+		denoiseVS.Compile("src/Shaders/DenoiseVS.hlsl");
+
+		Graphics::_Shader denoisePS = {};
+		denoisePS.compiler.profile = "ps_6_6";
+		denoisePS.Compile("src/Shaders/DenoisePS.hlsl");
+
+		denoiser.renderer.shaderSet.vertex = denoiseVS;
+		denoiser.renderer.shaderSet.pixel = denoisePS;
+
+		Graphics::InputParameter::Init(&denoiser.inputMap.arrayResources["camera"], 0);
+		Graphics::InputParameter::Init(&denoiser.inputMap.arrayResources["materials"], 1);
+		denoiser.inputMap.arrayResources["camera"].gpuAddress = camera.buffer.resource.resource->GetGPUVirtualAddress();
+		denoiser.inputMap.arrayResources["materials"].gpuAddress = blocks.materialBoxSet.materialBuffer.resource.resource->GetGPUVirtualAddress();
+
+		Graphics::InputParameter::Init(&denoiser.inputMap.rwArrayResources["pixelInfo"], 1);
+		denoiser.inputMap.rwArrayResources["pixelInfo"].gpuAddress = pixelInfoBuffer.resource.resource->GetGPUVirtualAddress();
+
+		denoiser.Init((Long2)windowSize, cmdList);
+		std::cout << "Initialized denoiser" << std::endl;
 
 		blocks.LoadBlock("dirt", "dirt.png");
 		blocks.LoadBlock("sand", "sand.png");
@@ -280,6 +322,7 @@ int main() {
 			graphics.Clear({});
 	
 			renderer.Render(cmdList);
+			denoiser.Render(cmdList);
 	
 			graphics.Render();
 	

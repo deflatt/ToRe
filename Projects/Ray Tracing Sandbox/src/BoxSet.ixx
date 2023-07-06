@@ -46,10 +46,11 @@ struct BoxSet {
 
 	static constexpr T_ind noInd = (T_ind)-1;
 	static constexpr T_val inf = std::numeric_limits<T_val>::max();
+	static constexpr T_val lim = 1.0 / 256.0;
 	using Vector = Array<T_val, numDims>;
 	using Bool = uint;
 
-	static bool AlmostEquals(Vector a, Vector b, T_val maxError = 1.0f / 256.0f) {
+	static bool AlmostEquals(Vector a, Vector b, T_val maxError = lim) {
 		for (size_t i = 0; i < numDims; i++) {
 			T_val error = abs(a[i] - b[i]);
 			if (error > maxError)
@@ -358,7 +359,7 @@ protected:
 				FixHelperOffset(path.back());
 			}
 			if (srcNode.box.GetSum() <= curMaxSum / divisor) {
-				T_val minSum = inf;
+				T_val minSumRatio = inf;
 				T_ind minSumInd = noInd;
 				for (T_ind childInd = curNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
 					Container& childContainer = containers[childInd];
@@ -368,8 +369,9 @@ protected:
 					T_val curSum = child.box.GetFit(srcNode.box.GetOffseted(offset - childContainer.offset)).GetSum();
 					if (curSum > curMaxSum)
 						continue;
-					if (curSum < minSum) {
-						minSum = curSum;
+					T_val curRatio = curSum / child.box.GetSum(); // Division by 0 shouldn't occur
+					if (curRatio < minSumRatio) {
+						minSumRatio = curRatio;
 						minSumInd = childInd;
 					}
 				}

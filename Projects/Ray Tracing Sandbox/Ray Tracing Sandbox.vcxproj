@@ -20,6 +20,16 @@
     <ClCompile Include="src\State.ixx" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="src\Shaders\DenoisePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="src\Shaders\DenoiseVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="src\Shaders\RayPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -32,7 +42,10 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\Math.hlsli" />
+    <None Include="src\Shaders\Ray_header.hlsli" />
+    <None Include="src\Shaders\Ray_light.hlsli" />
+    <None Include="src\Shaders\Ray_math.hlsli" />
+    <None Include="src\Shaders\Ray_sky.hlsli" />
     <None Include="src\Shaders\Ray_trace.hlsli" />
   </ItemGroup>
   <ItemGroup>

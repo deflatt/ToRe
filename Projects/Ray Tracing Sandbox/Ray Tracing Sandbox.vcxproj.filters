@@ -39,12 +39,27 @@
     <FxCompile Include="src\Shaders\RayPS.hlsl">
       <Filter>Source Files\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="src\Shaders\DenoiseVS.hlsl">
+      <Filter>Source Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="src\Shaders\DenoisePS.hlsl">
+      <Filter>Source Files\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\Shaders\Math.hlsli">
+    <None Include="src\Shaders\Ray_math.hlsli">
       <Filter>Source Files\Shaders</Filter>
     </None>
     <None Include="src\Shaders\Ray_trace.hlsli">
+      <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="src\Shaders\Ray_sky.hlsli">
+      <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="src\Shaders\Ray_header.hlsli">
+      <Filter>Source Files\Shaders</Filter>
+    </None>
+    <None Include="src\Shaders\Ray_light.hlsli">
       <Filter>Source Files\Shaders</Filter>
     </None>
   </ItemGroup>
