@@ -2,7 +2,7 @@
 #include "Ray_sky.hlsli"
 
 #define numBounces 1
-#define numSamples 3
+#define numSamples 1
 
 void LightTrace(float3 origin, float3 ray){
     TraceResult inTrace = Trace(origin, ray);
@@ -14,7 +14,6 @@ void LightTrace(float3 origin, float3 ray){
         pixelInfo[pInd].incomingLight = SkyTrace(ray);
         return;
     }
-    
     float3 total = 0.0f;
     for (uint i = 0; i < numSamples; i++){
         

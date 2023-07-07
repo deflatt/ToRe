@@ -151,6 +151,7 @@ struct BoxSet {
 
 	struct NodeInfo {
 		T_ind refCount = 0;
+		T_val volume = (T_val)0;
 	};
 
 	struct Container {
@@ -352,6 +353,8 @@ protected:
 		T_val curMaxSum = startSum;
 		for (T_ind curNodeInd = rootNodeInd;;) {
 			Node& curNode = nodes[curNodeInd];
+
+			nodeInfo[curNodeInd].volume += nodeInfo[nodeInd].volume;
 			
 			curNode.box.Fit(srcNode.box.GetOffseted(offset));
 			if (curNode.type == Node::Type::helper) {
@@ -359,8 +362,8 @@ protected:
 				FixHelperOffset(path.back());
 			}
 			if (srcNode.box.GetSum() <= curMaxSum / divisor) {
-				T_val minSumRatio = inf;
-				T_ind minSumInd = noInd;
+				T_val maxSumRatio = -inf;
+				T_ind nextInd = noInd;
 				for (T_ind childInd = curNode.child; childInd != noInd; childInd = containers[childInd].sibling) {
 					Container& childContainer = containers[childInd];
 					Node& child = nodes[childContainer.node];
@@ -369,14 +372,14 @@ protected:
 					T_val curSum = child.box.GetFit(srcNode.box.GetOffseted(offset - childContainer.offset)).GetSum();
 					if (curSum > curMaxSum)
 						continue;
-					T_val curRatio = curSum / child.box.GetSum(); // Division by 0 shouldn't occur
-					if (curRatio < minSumRatio) {
-						minSumRatio = curRatio;
-						minSumInd = childInd;
+					T_val curRatio = ((nodeInfo[childContainer.node].volume + nodeInfo[nodeInd].volume) / curSum);
+					if (curRatio > maxSumRatio) {
+						maxSumRatio = curRatio;
+						nextInd = childInd;
 					}
 				}
-				if (minSumInd != noInd) {
-					Container& childContainer = containers[minSumInd];
+				if (nextInd != noInd) {
+					Container& childContainer = containers[nextInd];
 					Node& child = nodes[childContainer.node];
 					if (nodeInfo[childContainer.node].refCount > 1) {
 						nodeInfo[childContainer.node].refCount--;
@@ -386,7 +389,7 @@ protected:
 					else {
 						nodeHashMap.erase(child);
 					}
-					path.push_back(minSumInd);
+					path.push_back(nextInd);
 					curNodeInd = childContainer.node;
 					offset -= childContainer.offset;
 					curMaxSum /= divisor;
@@ -423,6 +426,7 @@ public:
 		T_ind nodeInd = CreateObject();
 		nodes[nodeInd].box = box;
 		nodes[nodeInd].child = child;
+		nodeInfo[nodeInd].volume = box.GetSum();
 		Insert(nodeInd, offset, startSum, rootInd);
 	}
 
@@ -483,6 +487,7 @@ public:
 				nodeHashMap.erase(node);
 			}
 		}
+		T_val srcVolume = nodeInfo[containers[path.back()].node].volume;
 		// Remove node(s)
 		T_ind pathEnd;
 		for (pathEnd = 0; pathEnd < path.size(); pathEnd++) {
@@ -513,6 +518,7 @@ public:
 					}
 				}
 			}
+			nodeInfo[container.node].volume -= srcVolume;
 			if ((--nodeInfo[container.node].refCount) == 0) {
 				RemoveNode(container.node);
 			}

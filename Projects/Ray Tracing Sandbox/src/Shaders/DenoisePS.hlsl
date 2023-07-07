@@ -27,7 +27,7 @@ struct PixelInfo {
 };
 RWStructuredBuffer<PixelInfo> pixelInfo : register(u1);
 
-#define denoiseRad 7
+#define denoiseRad 6
 #define minCosDev 0.95f
 #define maxPosDev 0.01f
 

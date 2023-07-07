@@ -134,6 +134,7 @@ struct BlockBoxSet {
 				}
 			}
 		}
+		std::cout << "Volume " << name << ": " << materialBoxSet.boxSet.nodeInfo[rootInd].volume << std::endl;
 		blockMap.insert({ name, rootInd });
 		materialBoxSet.boxSet.nodeInfo[rootInd].refCount++;
 	}
@@ -252,9 +253,16 @@ int main() {
 		blocks.LoadBlock("oak_leaves", "oak_leaves.png");
 		blocks.LoadBlock("oak_log", "oak_log.png");
 		blocks.LoadBlock("gravel", "gravel.png");
+		blocks.LoadBlock("spruce_log", "spruce_log.png");
+		blocks.LoadBlock("spruce_leaves", "spruce_leaves.png");
+		blocks.LoadBlock("spruce_leaves", "spruce_leaves.png");
+		blocks.LoadBlock("podzol", "podzol_top.png");
+		blocks.LoadBlock("moss_block", "moss_block.png");
+		blocks.LoadBlock("mossy_cobblestone", "mossy_cobblestone.png");
+#if 1
 
 		{
-			std::ifstream ifile("savanna_100x40x100.mcw");
+			std::ifstream ifile("taiga_150x50x150.mcw");
 			Int3 origin, size;
 			for (size_t i = 0; i < 3; i++) {
 				ifile >> origin[i] >> size[i];
@@ -277,14 +285,19 @@ int main() {
 			}
 			ifile.close();
 		}
-		blocks.InsertBlock("dirt", {});
+#endif
+		//blocks.InsertBlock("dirt", {});
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 0, 128.0f);
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 0, 128.0f);
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 2.0f, 0.0f }, 0, 128.0f);
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 2.0f, 0.0f }, 0, 128.0f);
 
 		State::Init(window.window.hwnd);
 	
 		Clock<float> deltaClock;
 	
-		Float3 offset = { 5.0f, 5.0f, 5.0f };
-		blocks.InsertBlock("sand", offset);
+		//Float3 offset = { 5.0f, 5.0f, 5.0f };
+		//blocks.InsertBlock("sand", offset);
 
 		float speed = 5.0f;
 	
@@ -294,26 +307,26 @@ int main() {
 			
 			float deltaTime = deltaClock.Restart().Seconds();
 
-			blocks.RemoveBlock("sand", offset);
-			if (GetKeyState(VK_LEFT) & 0x8000) {
-				offset[2] -= speed * deltaTime;
-			}
-			if (GetKeyState(VK_RIGHT) & 0x8000) {
-				offset[2] += speed * deltaTime;
-			}
-			if (GetKeyState(VK_UP) & 0x8000) {
-				offset[1] += speed * deltaTime;
-			}
-			if (GetKeyState(VK_DOWN) & 0x8000) {
-				offset[1] -= speed * deltaTime;
-			}
-			if (GetKeyState(VK_NUMPAD8) & 0x8000) {
-				offset[0] += speed * deltaTime;
-			}
-			if (GetKeyState(VK_NUMPAD2) & 0x8000) {
-				offset[0] -= speed * deltaTime;
-			}
-			blocks.InsertBlock("sand", offset);
+			//blocks.RemoveBlock("sand", offset);
+			//if (GetKeyState(VK_LEFT) & 0x8000) {
+			//	offset[2] -= speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_RIGHT) & 0x8000) {
+			//	offset[2] += speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_UP) & 0x8000) {
+			//	offset[1] += speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_DOWN) & 0x8000) {
+			//	offset[1] -= speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_NUMPAD8) & 0x8000) {
+			//	offset[0] += speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_NUMPAD2) & 0x8000) {
+			//	offset[0] -= speed * deltaTime;
+			//}
+			//blocks.InsertBlock("sand", offset);
 
 			camera.Update(cmdList);
 			
@@ -322,11 +335,12 @@ int main() {
 			graphics.Clear({});
 	
 			renderer.Render(cmdList);
-			denoiser.Render(cmdList);
+			if (!(GetKeyState('R') & 0x8000))
+				denoiser.Render(cmdList);
 	
 			graphics.Render();
 	
-			while (fpsClock.Elapsed().Seconds() < 1.0 / 60.0);
+			while (fpsClock.Elapsed().Seconds() < 1.0 / 40.0);
 			fpsClock.Restart();
 		}
 	
