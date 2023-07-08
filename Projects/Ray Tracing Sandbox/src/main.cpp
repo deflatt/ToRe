@@ -149,13 +149,155 @@ struct BlockBoxSet {
 
 };
 
+struct TraceResult {
+	float scale;
+	uint ind;
+	Float3 pos;
+	Float3 normal;
+	uint numChecks;
+};
+struct Intersection {
+	float sMin;
+	Float3 normal;
+};
+
+using _BoxSet = MaterialBoxSet::_BoxSet;
+Intersection Intersects(Float3 origin, Float3 invRay, _BoxSet::Box box, Float3 boxOffset) {
+	static constexpr float lim = 1.0f / 256.0f;
+
+	Intersection result;
+	result.sMin = -std::numeric_limits<float>::infinity();
+	float sMax = std::numeric_limits<float>::infinity();
+	result.normal = 0.0f;
+	uint side = 0;
+
+	Float3 sLow = (boxOffset + box.low - origin) * invRay;
+	Float3 sHigh = (boxOffset + box.high - origin) * invRay;
+	for (uint i = 0; i < 3; i++) {
+		float sdMin = min(sLow[i], sHigh[i]);
+		float sdMax = max(sLow[i], sHigh[i]);
+
+		if (sdMin > result.sMin) {
+			result.sMin = sdMin;
+			side = i;
+		}
+		if (sdMax < sMax) {
+			sMax = sdMax;
+		}
+	}
+	result.sMin = max(result.sMin, lim);
+	if (result.sMin > sMax) {
+		result.sMin = -std::numeric_limits<float>::infinity();
+	}
+	else {
+		result.normal[side] = (invRay[side] > 0.0f) ? -1.0f : 1.0f;
+	}
+	return result;
+}
+
+#define MAX_LOCATION_SIZE 24
+
+TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
+	Float3 invRay = ray;
+	invRay.Reciprocate();
+
+	static constexpr uint noInd = ~0;
+
+	TraceResult result;
+	result.scale = std::numeric_limits<float>::infinity();
+	result.ind = noInd;
+	result.numChecks = 0;
+
+	_BoxSet::Container container;
+	_BoxSet::Node node;
+	bool newContainer = true;
+	Intersection intersection;
+
+	uint location[MAX_LOCATION_SIZE];
+	location[0] = 0;
+	uint curDepth = 0;
+	float minScales[MAX_LOCATION_SIZE];
+
+	Float3 curOffset = 0.0f;
+
+	uint curInd, lastChildInd;
+	float minScale;
+	float maxScale;
+
+	while (true) {
+		if (curDepth == MAX_LOCATION_SIZE)
+			break;
+
+		curInd = location[curDepth];
+		if (!newContainer)
+			lastChildInd = location[curDepth + 1];
+
+		container = boxSet->containers[curInd];
+		node = boxSet->nodes[container.node];
+
+		if (newContainer) {
+			curOffset += container.offset;
+		}
+
+		minScale = -std::numeric_limits<float>::infinity();
+		if (!newContainer)
+			minScale = minScales[curDepth];
+
+		maxScale = result.scale;
+
+		uint nextInd = noInd;
+		for (uint childInd = node.child; childInd != noInd; childInd = boxSet->containers[childInd].sibling) {
+			if (!newContainer && childInd == lastChildInd)
+				continue;
+			intersection = Intersects(origin, invRay, boxSet->nodes[boxSet->containers[childInd].node].box, curOffset + boxSet->containers[childInd].offset);
+			std::cout << "Checked against " << childInd << std::endl;
+			result.numChecks++;
+			if (intersection.sMin == -std::numeric_limits<float>::infinity())
+				continue;
+			if (intersection.sMin < minScale || intersection.sMin > maxScale
+				|| (intersection.sMin == minScale && (!newContainer && childInd <= lastChildInd))
+				|| (intersection.sMin == maxScale && nextInd != noInd && childInd > nextInd))
+				continue;
+			if (boxSet->nodes[boxSet->containers[childInd].node].type == _BoxSet::Node::Type::object) {
+				if (intersection.sMin < result.scale) {
+					result.scale = intersection.sMin;
+					result.ind = boxSet->nodes[boxSet->containers[childInd].node].child;
+					result.normal = intersection.normal;
+					result.pos = origin + ray * result.scale;
+				}
+				continue;
+			}
+			maxScale = intersection.sMin;
+			nextInd = childInd;
+		}
+		if (nextInd != noInd) {
+			std::cout << "Entered " << nextInd << std::endl;
+			location[curDepth + 1] = nextInd;
+			minScales[curDepth] = maxScale;
+			newContainer = true;
+			curDepth++;
+		}
+		else {
+			if (curDepth == 0)
+				break;
+			std::cout << "Discarded " << curInd << std::endl;
+			newContainer = false;
+			curOffset -= container.offset;
+			curDepth--;
+		}
+	}
+	if (result.ind != noInd)
+		result.pos = origin + ray * result.scale;
+	return result;
+}
+
 int main() {
 
 	try {
 	
 		Graphics::Device::Init();
 	
-		Int2 windowSize = { 1920, 1080 };
+		Int2 windowSize = { 1280, 720 };
 	
 		Windows::Window::CreateClass("ToRe Window Class", 0);
 		
@@ -259,7 +401,7 @@ int main() {
 		blocks.LoadBlock("podzol", "podzol_top.png");
 		blocks.LoadBlock("moss_block", "moss_block.png");
 		blocks.LoadBlock("mossy_cobblestone", "mossy_cobblestone.png");
-#if 1
+#if 0
 
 		{
 			std::ifstream ifile("taiga_150x50x150.mcw");
@@ -286,11 +428,19 @@ int main() {
 			ifile.close();
 		}
 #endif
-		//blocks.InsertBlock("dirt", {});
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 0, 128.0f);
+		blocks.InsertBlock("dirt", {});
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 5, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 0, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 2.0f, 0.0f }, 0, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 2.0f, 0.0f }, 0, 128.0f);
+
+		TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { -1.0f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f });
+		std::cout << "Scale: " << result.scale << std::endl;
+		std::cout << "Index: " << result.ind << std::endl;
+		std::cout << "Position: " << result.pos.ToString() << std::endl;
+		std::cout << "Normal: " << result.normal.ToString() << std::endl;
+		std::cout << "Num checks: " << result.numChecks << std::endl;
+		return 0;
 
 		State::Init(window.window.hwnd);
 	
