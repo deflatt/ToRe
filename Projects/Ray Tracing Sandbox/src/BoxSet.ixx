@@ -135,9 +135,18 @@ struct BoxSet {
 
 	// Indices implicitly point to containers unless otherwise specified
 
+	struct Link {
+		Array<T_ind, numDims> low = noInd, high = noInd;
+		Link() {}
+		Link(const Link& that) : low(that.low), high(that.high) {}
+	};
+
 	struct Node {
 		Box box = {};
-		T_ind child = noInd;
+		union {
+			T_ind child;
+			Link childLink = {};
+		};
 		enum struct Type {
 			root = 0,
 			helper = 1,
@@ -147,6 +156,9 @@ struct BoxSet {
 		bool operator==(const Node& that) const {
 			return box == that.box && child == that.child && type == that.type;
 		}
+
+		Node() {}
+		Node(const Node& that) : box(that.box), childLink(that.childLink), type(that.type) {}
 	};
 
 	struct NodeInfo {
@@ -157,7 +169,14 @@ struct BoxSet {
 	struct Container {
 		Vector offset = {};
 		T_ind node = noInd;
-		T_ind sibling = noInd;
+
+		union {
+			T_ind sibling;
+			Link siblingLink = {};
+		};
+
+		Container() {}
+		Container(const Container& that) : offset(that.offset), node(that.node), siblingLink(that.siblingLink) {}
 	};
 
 	T_val divisor = (T_val)2;
@@ -291,12 +310,63 @@ protected:
 		nodeInfo[nodeInd] = NodeInfo();
 	}
 
-	T_ind AddChild(T_ind parentNodeInd) {
+	/*T_ind AddChild(T_ind parentNodeInd) {
 		Node& parent = nodes[parentNodeInd];
 		T_ind childInd = containers.New();
 		containers[childInd].sibling = parent.child;
 		parent.child = childInd;
 		return childInd;
+	}*/
+
+	T_ind AddChild(T_ind nodeInd, Vector offset, T_ind parentNodeInd) {
+		T_ind childInd = containers.New();
+		Container& container = containers[childInd];
+		Node& node = nodes[nodeInd];
+
+		container.offset = offset;
+		container.node = nodeInd;
+
+		Node& parentNode = nodes[parentNodeInd];
+		Link& link = parentNode.childLink;
+
+		for (size_t i = 0; i < numDims; i++) {
+			// Insert into the i-th low linked list, sorted increasingly
+			auto Less = [&containers, i](T_ind a, T_ind b) {
+				if (containers[a].offset[i] == containers[b].offset[i])
+					return a <= b;
+				return containers[a].offset[i] <= containers[b].offset[i];
+			};
+			if (link.low[i] == noInd || Less(childInd, link.low[i])) {
+				container.siblingLink.low[i] = link.low[i];
+				link.low[i] = childInd;
+			}
+			else {
+				for (T_ind childInd = link.low[i]; childInd != noInd; childInd = containers[childInd].siblingLink.low[i]) {
+					Link& siblingLink = containers[childInd].siblingLink;
+					if (Less(childInd, siblingLink.low[i])) {
+						container.siblingLink.low[i] = siblingLink.low[i];
+						siblingLink.low[i] = childInd;
+						break;
+					}
+				}
+			}
+
+			// Insert into the i-th high linked list, sorted decreasingly
+			if (link.high[i] == noInd || Less(link.high[i], childInd)) {
+				container.siblingLink.high[i] = link.high[i];
+				link.high[i] = childInd;
+			}
+			else {
+				for (T_ind childInd = link.high[i]; childInd != noInd; childInd = containers[childInd].siblingLink.high[i]) {
+					Link& siblingLink = containers[childInd].siblingLink;
+					if (Less(siblingLink.high[i], childInd)) {
+						container.siblingLink.high[i] = siblingLink.high[i];
+						siblingLink.high[i] = childInd;
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	T_ind DuplicateHelper(T_ind nodeInd) {
