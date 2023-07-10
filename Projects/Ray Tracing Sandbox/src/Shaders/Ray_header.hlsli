@@ -15,10 +15,14 @@ struct Camera {
 };
 StructuredBuffer<Camera> camera : register(t0);
 
+struct Link {
+    uint3 low, high;
+};
+
 struct Container {
     float3 offset;
     uint node;
-    uint sibling;
+    Link siblingLink;
 };
 StructuredBuffer<Container> containers : register(t1);
 
@@ -34,7 +38,7 @@ struct Box {
 
 struct Node {
     Box box;
-    uint child;
+    Link childLink;
     NodeType type;
 };
 StructuredBuffer<Node> nodes : register(t2);

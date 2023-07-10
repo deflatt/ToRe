@@ -91,7 +91,7 @@ TraceResult Trace(float3 origin, float3 ray){
         maxScale = result.scale;
         
         uint nextInd = noInd;
-        [loop] for (uint childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling){
+        [loop] for (uint childInd = node.childLink.low[0]; childInd != noInd; childInd = containers[childInd].siblingLink.low[0]){
             if (!newContainer && childInd == lastChildInd)
                 continue;
             intersection = Intersects(origin, invRay, nodes[containers[childInd].node].box, curOffset + containers[childInd].offset);
@@ -104,7 +104,7 @@ TraceResult Trace(float3 origin, float3 ray){
             if (nodes[containers[childInd].node].type == NODE_TYPE_OBJECT) {
                 if (intersection.sMin < result.scale) {
                     result.scale = intersection.sMin;
-                    result.ind = nodes[containers[childInd].node].child;
+                    result.ind = nodes[containers[childInd].node].childLink.low[0];
                     result.normal = intersection.normal;
                     result.pos = origin + ray * result.scale;
                 }

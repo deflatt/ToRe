@@ -144,7 +144,7 @@ struct BlockBoxSet {
 	}
 
 	void RemoveBlock(std::string name, Float3 position) {
-		materialBoxSet.boxSet.RemoveRoot(blockMap.at(name), position);
+		//materialBoxSet.boxSet.RemoveRoot(blockMap.at(name), position);
 	}
 
 };
@@ -295,6 +295,14 @@ int main() {
 
 	try {
 	
+		MaterialBoxSet::_BoxSet boxSet = {};
+		boxSet.Init(1024);
+		boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, {}, 0, 16.0f);
+		boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 1.0f, 0.0f, 0.0f }, 0, 16.0f);
+
+		return 0;
+
+#if 0
 		Graphics::Device::Init();
 	
 		Int2 windowSize = { 1280, 720 };
@@ -434,13 +442,12 @@ int main() {
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 2.0f, 0.0f }, 0, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 2.0f, 0.0f }, 0, 128.0f);
 
-		TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { -1.0f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f });
-		std::cout << "Scale: " << result.scale << std::endl;
-		std::cout << "Index: " << result.ind << std::endl;
-		std::cout << "Position: " << result.pos.ToString() << std::endl;
-		std::cout << "Normal: " << result.normal.ToString() << std::endl;
-		std::cout << "Num checks: " << result.numChecks << std::endl;
-		return 0;
+		//TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { -1.0f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f });
+		//std::cout << "Scale: " << result.scale << std::endl;
+		//std::cout << "Index: " << result.ind << std::endl;
+		//std::cout << "Position: " << result.pos.ToString() << std::endl;
+		//std::cout << "Normal: " << result.normal.ToString() << std::endl;
+		//std::cout << "Num checks: " << result.numChecks << std::endl;
 
 		State::Init(window.window.hwnd);
 	
@@ -493,6 +500,7 @@ int main() {
 			while (fpsClock.Elapsed().Seconds() < 1.0 / 40.0);
 			fpsClock.Restart();
 		}
+#endif
 	
 	}
 	catch (Graphics::Shader::E_FailedCompilation e) {
