@@ -40,6 +40,9 @@ struct E_BoxSetBadRemoval : public _Exception {
 struct E_BoxSetNoReference : public _Exception {
 	E_BoxSetNoReference() : _Exception("Cannot remove reference from a non-referenced node.") {}
 };
+struct E_BadContainerRemoval : public _Exception {
+	E_BadContainerRemoval() : _Exception("Container did not belong to the specified node.") {}
+};
 
 export template <typename T_val, typename T_ind, size_t numDims>
 struct BoxSet {
@@ -143,6 +146,10 @@ struct BoxSet {
 		Array<T_ind, numDims>& operator[](bool i) {
 			return i ? high : low;
 		}
+
+		bool operator==(const Link& that) const {
+			return low == that.low && high == that.high;
+		}
 	};
 
 	struct Node {
@@ -158,7 +165,7 @@ struct BoxSet {
 		} type = Type::root;
 		
 		bool operator==(const Node& that) const {
-			return box == that.box && child == that.child && type == that.type;
+			return box == that.box && childLink == that.childLink && type == that.type;
 		}
 
 		Node() {}
@@ -216,38 +223,20 @@ struct BoxSet {
 			if (first.type != second.type)
 				return false;
 			if (first.type == Node::Type::helper) {
-				T_ind numChildren = 0;
-				for (T_ind firstChild = first.child; firstChild != noInd; firstChild = boxSet.containers[firstChild].sibling)
-					numChildren++;
-				{
-					T_ind secondSize = 0;
-					for (T_ind secondChild = second.child; secondChild != noInd; secondChild = boxSet.containers[secondChild].sibling)
-						secondSize++;
-					if (secondSize != numChildren)
+				T_ind firstInd = first.child;
+				T_ind secondInd = second.child;
+				while (firstInd != noInd && secondInd != noInd) {
+					if (boxSet.containers[firstInd].node != boxSet.containers[secondInd].node)
 						return false;
-				}
-				std::vector<bool> used(numChildren, false);
-
-				for (T_ind firstChild = first.child; firstChild != noInd; firstChild = boxSet.containers[firstChild].sibling) {
-					T_ind ind = 0;
-					for (T_ind secondChild = second.child; secondChild != noInd; secondChild = boxSet.containers[secondChild].sibling) {
-						if (used[ind]) {
-							ind++;
-							continue;
-						}
-						if (boxSet.containers[firstChild].node == boxSet.containers[secondChild].node
-							&& boxSet.containers[firstChild].offset == boxSet.containers[secondChild].offset)
-							break;
-						ind++;
-					}
-					if (ind == numChildren)
+					if (boxSet.containers[firstInd].offset != boxSet.containers[secondInd].offset)
 						return false;
-					used[ind] = true;
+					firstInd = boxSet.containers[firstInd].sibling;
+					secondInd = boxSet.containers[secondInd].sibling;
 				}
-				return true;
+				return firstInd == secondInd;
 			}
 			else {
-				return first.box == second.box && first.child == second.child;
+				return first.box == second.box && first.childLink == second.childLink;
 			}
 		}
 	};
@@ -307,7 +296,6 @@ protected:
 		container.offset = offset;
 		container.node = nodeInd;
 		nodeInfo[nodeInd].refCount++;
-		nodeInfo[parentNodeInd].volume += nodeInfo[nodeInd].volume;
 
 		Node& parentNode = nodes[parentNodeInd];
 		Link& link = parentNode.childLink;
@@ -324,9 +312,9 @@ protected:
 				link.low[i] = childInd;
 			}
 			else {
-				for (T_ind childInd = link.low[i]; childInd != noInd; childInd = containers[childInd].siblingLink.low[i]) {
-					Link& siblingLink = containers[childInd].siblingLink;
-					if (Less(childInd, siblingLink.low[i])) {
+				for (T_ind itInd = link.low[i]; itInd != noInd; itInd = containers[itInd].siblingLink.low[i]) {
+					Link& siblingLink = containers[itInd].siblingLink;
+					if (siblingLink.low[i] == noInd || Less(itInd, siblingLink.low[i])) {
 						container.siblingLink.low[i] = siblingLink.low[i];
 						siblingLink.low[i] = childInd;
 						break;
@@ -345,9 +333,9 @@ protected:
 				link.high[i] = childInd;
 			}
 			else {
-				for (T_ind childInd = link.high[i]; childInd != noInd; childInd = containers[childInd].siblingLink.high[i]) {
-					Link& siblingLink = containers[childInd].siblingLink;
-					if (Greater(childInd, siblingLink.high[i])) {
+				for (T_ind itInd = link.high[i]; itInd != noInd; itInd = containers[itInd].siblingLink.high[i]) {
+					Link& siblingLink = containers[itInd].siblingLink;
+					if (siblingLink.high[i] == noInd || Greater(itInd, siblingLink.high[i])) {
 						container.siblingLink.high[i] = siblingLink.high[i];
 						siblingLink.high[i] = childInd;
 						break;
@@ -380,23 +368,13 @@ protected:
 		return newNodeInd;
 	}
 
-	void DecompressContainer(T_ind ind, T_ind* childInd = nullptr) {
+	void DecompressContainer(T_ind ind) {
 		Container& container = containers[ind];
 		Node& node = nodes[container.node];
 		if (nodeInfo[container.node].refCount > 1) {
 			nodeInfo[container.node].refCount--;
 			container.node = DuplicateNode(container.node);
 			nodeInfo[container.node].refCount++;
-			if (childInd != nullptr) {
-				T_ind newChildInd = nodes[container.node].child;
-				for (T_ind oldChildInd = node.child; oldChildInd != noInd; oldChildInd = containers[oldChildInd].sibling) {
-					if (oldChildInd == *childInd) {
-						*childInd = newChildInd;
-						break;
-					}
-					newChildInd = containers[newChildInd].sibling;
-				}
-			}
 		}
 		else {
 			nodeHashMap.erase(node);
@@ -439,11 +417,13 @@ protected:
 							break;
 						}
 						// Maybe check for invalid call
+						if (containers[childInd].siblingLink[j][i] == noInd) {
+							throw E_BadContainerRemoval();
+						}
 					}
 				}
 			}
 		}
-		nodeInfo[nodeInd].volume -= nodeInfo[container.node].volume;
 		if ((--nodeInfo[container.node].refCount) == 0) {
 			RemoveNode(container.node);
 		}
@@ -457,9 +437,14 @@ protected:
 		std::vector<T_ind> path = {};
 		T_val curMaxSum = startSum;
 		Vector curOffset = {};
-
+		
 		for (T_ind curNodeInd = rootNodeInd;;) {
 			Node& curNode = nodes[curNodeInd];
+
+			if (curNode.type == Node::Type::root)
+				curNode.box.Fit(srcNode.box.GetOffseted(offset - curOffset));
+
+			nodeInfo[curNodeInd].volume += nodeInfo[nodeInd].volume;
 
 			if (srcSum <= curMaxSum / divisor) {
 				// Look for helper, if found, create potential duplicate, remove from node, scale box, insert again, if not found, create new helper, scale box and insert
@@ -480,21 +465,23 @@ protected:
 					}
 				}
 				if (nextInd != noInd) {
-					// Duplicate is only really necessary if refCount > 1 but whatever
+					DecompressContainer(nextInd);
 					Vector oldOffset = containers[nextInd].offset;
-					T_ind duplicateInd = DuplicateNode(containers[nextInd].node);
+					T_ind helperInd = containers[nextInd].node;
+					nodeInfo[helperInd].refCount++;
 					RemoveContainer(curNodeInd, nextInd);
+					nodeInfo[helperInd].refCount--;
 
-					Node& node = nodes[duplicateInd];
+					Node& node = nodes[helperInd];
 					node.box.Fit(srcNode.box.GetOffseted(offset - (oldOffset + curOffset)));
 					Vector newOffset = oldOffset + node.box.low;
-					OffsetNode(duplicateInd, -node.box.low);
+					OffsetNode(helperInd, -node.box.low);
 
-					T_ind newContainerInd = AddChild(duplicateInd, newOffset, curNodeInd);
+					T_ind newContainerInd = AddChild(helperInd, newOffset, curNodeInd);
 					path.push_back(newContainerInd);
 					curOffset += newOffset;
 					curMaxSum /= divisor;
-					curNodeInd = duplicateInd;
+					curNodeInd = helperInd;
 				}
 				else {
 					T_ind helperInd = nodes.New();
@@ -537,11 +524,12 @@ public:
 
 protected:
 
-	bool FindPath(Node srcNode, Vector offset, T_ind curNodeInd, std::vector<T_ind>& path) {
+	bool FindDecompressedPath(Node srcNode, Vector offset, T_ind curNodeInd, std::vector<T_ind>& path) {
 		for (T_ind childInd = nodes[curNodeInd].child; childInd != noInd; childInd = containers[childInd].sibling) {
 			Container& childContainer = containers[childInd];
 			Node& child = nodes[childContainer.node];
 			if (child == srcNode && AlmostEquals(childContainer.offset, offset)) {
+				DecompressContainer(childInd);
 				path.push_back(childInd);
 				return true;
 			}
@@ -550,8 +538,9 @@ protected:
 			if (!child.box.GetFit(srcNode.box.GetOffseted(offset - childContainer.offset)).AlmostEquals(child.box)) { // Floating point rounding errors requires "AlmostEquals" :(
 				continue;
 			}
+			DecompressContainer(childInd);
 			path.push_back(childInd);
-			if (FindPath(srcNode, offset - childContainer.offset, childContainer.node, path))
+			if (FindDecompressedPath(srcNode, offset - childContainer.offset, childContainer.node, path))
 				return true;
 			path.pop_back();
 		}
@@ -560,102 +549,72 @@ protected:
 
 public:
 
-	//void Remove(Node srcNode, Vector offset, T_ind rootNodeInd = 0) {
-	//	std::vector<T_ind> path = {};
-	//	if (!FindPath(srcNode, offset, rootNodeInd, path)) {
-	//		throw E_BoxSetBadLocation();
-	//	}
-	//	// Decompress path
-	//	for (T_ind i = 0; i + 1 < path.size(); i++) {
-	//		Container& container = containers[path[i]];
-	//		Node& node = nodes[container.node];
-	//		if (nodeInfo[container.node].refCount > 1) {
-	//			nodeInfo[container.node].refCount--;
-	//			container.node = DuplicateHelper(container.node);
-	//			nodeInfo[container.node].refCount++;
-	//			T_ind newChildInd = nodes[container.node].child;
-	//			for (T_ind oldChildInd = node.child; oldChildInd != noInd; oldChildInd = containers[oldChildInd].sibling) {
-	//				if (oldChildInd == path[i + 1]) {
-	//					path[i + 1] = newChildInd;
-	//					break;
-	//				}
-	//				newChildInd = containers[newChildInd].sibling;
-	//			}
-	//		}
-	//		else {
-	//			nodeHashMap.erase(node);
-	//		}
-	//	}
-	//	T_val srcVolume = nodeInfo[containers[path.back()].node].volume;
-	//	// Remove node(s)
-	//	T_ind pathEnd;
-	//	for (pathEnd = 0; pathEnd < path.size(); pathEnd++) {
-	//		T_ind containerInd = path[path.size() - 1 - pathEnd];
-	//		Container& container = containers[containerInd];
-	//		Node& node = nodes[container.node];
+	void Remove(Node srcNode, Vector offset, T_ind rootNodeInd = 0) {
+		std::vector<T_ind> path = {};
+		if (!FindDecompressedPath(srcNode, offset, rootNodeInd, path)) {
+			throw E_BoxSetBadLocation();
+		}
+		std::vector<T_ind> nodePath = { rootNodeInd };
+		T_val srcVolume = nodeInfo[containers[path.back()].node].volume;
+		nodeInfo[rootNodeInd].volume -= srcVolume;
+		for (T_ind i = 0; i + 1 < path.size(); i++) {
+			nodePath.push_back(containers[path[i]].node);
+			nodeInfo[nodePath.back()].volume -= srcVolume;
+		}
+		nodePath.push_back(containers[path.back()].node);
 
-	//		Container& parentContainer = containers[path[path.size() - 2 - pathEnd]];
-	//		T_ind parentNodeInd;
-	//		if (pathEnd + 1 == path.size())
-	//			parentNodeInd = rootNodeInd;
-	//		else
-	//			parentNodeInd = containers[path[path.size() - 2 - pathEnd]].node;
-	//		Node& parent = nodes[parentNodeInd];
+		// Remove container(s)
+		while (path.size() > 0) {
+			T_ind containerInd = path.back();
+			T_ind parentNodeInd = nodePath[nodePath.size() - 2];
 
-	//		if (parent.child == containerInd) {
-	//			parent.child = container.sibling;
-	//		}
-	//		else {
-	//			for (T_ind childInd = parent.child; childInd != noInd; childInd = containers[childInd].sibling) {
-	//				Container& childContainer = containers[childInd];
-	//				if (childContainer.sibling == containerInd) {
-	//					childContainer.sibling = container.sibling;
-	//					break;
-	//				}
-	//				if (childContainer.sibling == noInd) {
-	//					throw E_BoxSetBadLocation(); // TODO: Fix exception
-	//				}
-	//			}
-	//		}
-	//		nodeInfo[container.node].volume -= srcVolume;
-	//		if ((--nodeInfo[container.node].refCount) == 0) {
-	//			RemoveNode(container.node);
-	//		}
-	//		containers.Remove(containerInd);
-	//		if (parent.child != noInd)
-	//			break;
-	//	}
-	//	// Update bounding boxes
-	//	for (T_ind i = pathEnd + 1; i < path.size() + 1; i++) {
-	//		T_ind containerInd;
-	//		T_ind nodeInd;
-	//		if (i == path.size())
-	//			nodeInd = rootNodeInd;
-	//		else {
-	//			containerInd = path[path.size() - 1 - i];
-	//			nodeInd = containers[containerInd].node;
-	//		}
-	//		Node& node = nodes[nodeInd];
-	//		
-	//		node.box = Box();
-	//		for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
-	//			node.box.Fit(nodes[containers[childInd].node].box.GetOffseted(containers[childInd].offset));
+			RemoveContainer(parentNodeInd, containerInd);
+			path.pop_back();
+			nodePath.pop_back();
 
-	//		if (node.type == Node::Type::helper)
-	//			FixHelperOffset(containerInd);
-	//	}
-	//	for (T_ind i = pathEnd + 1; i < path.size(); i++) {
-	//		T_ind containerInd = path[path.size() - 1 - i];
-	//		CompressContainer(containerInd);
-	//	}
-	//}
+			if (nodes[parentNodeInd].child != noInd)
+				break;
+		}
+		// Update bounding boxes
+		for (T_ind i = 0; i < nodePath.size(); i++) {
+			T_ind nodeInd = nodePath[nodePath.size() - 1 - i];
+			Node& node = nodes[nodeInd];
+			
+			node.box = Box();
+			for (T_ind childInd = node.child; childInd != noInd; childInd = containers[childInd].sibling)
+				node.box.Fit(nodes[containers[childInd].node].box.GetOffseted(containers[childInd].offset));
 
-	//void RemoveObject(Box box, Vector offset, T_ind child, T_ind rootInd = 0) {
-	//	Remove({ box, child, Node::Type::object }, offset, rootInd);
-	//}
+			if (node.type != Node::Type::helper)
+				continue;
 
-	//void RemoveRoot(T_ind srcRootNodeInd, Vector offset, T_ind rootInd = 0) {
-	//	Remove(nodes[srcRootNodeInd], offset, rootInd);
-	//}
+			T_ind containerInd = path[path.size() - 1 - i];
+			T_ind parentNodeInd = nodePath[nodePath.size() - 2 - i];
+			Container& container = containers[containerInd];
+			Vector oldOffset = container.offset;
+			nodeInfo[nodeInd].refCount++;
+			RemoveContainer(parentNodeInd, containerInd);
+			nodeInfo[nodeInd].refCount--;
+			
+			Vector newOffset = oldOffset + node.box.low;
+			OffsetNode(nodeInd, -node.box.low);
+			AddChild(nodeInd, newOffset, parentNodeInd);
+		}
+		for (T_ind i = 0; i < path.size(); i++) {
+			T_ind containerInd = path[path.size() - 1 - i];
+			CompressContainer(containerInd);
+		}
+	}
+
+	void RemoveObject(Box box, Vector offset, T_ind child, T_ind rootInd = 0) {
+		Node node = {};
+		node.box = box;
+		node.child = child;
+		node.type = Node::Type::object;
+		Remove(node, offset, rootInd);
+	}
+
+	void RemoveRoot(T_ind srcRootNodeInd, Vector offset, T_ind rootInd = 0) {
+		Remove(nodes[srcRootNodeInd], offset, rootInd);
+	}
 
 };

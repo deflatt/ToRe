@@ -18,9 +18,9 @@ import TR.Media.FileDecoder;
 
 using namespace TR;
 
-struct MaterialBoxSet {
+using _BoxSet = BoxSet<float, uint, 3>;
 
-	using _BoxSet = BoxSet<float, uint, 3>;
+struct MaterialBoxSet {
 
 	struct Material {
 		Float3 emission = {};
@@ -144,7 +144,7 @@ struct BlockBoxSet {
 	}
 
 	void RemoveBlock(std::string name, Float3 position) {
-		//materialBoxSet.boxSet.RemoveRoot(blockMap.at(name), position);
+		materialBoxSet.boxSet.RemoveRoot(blockMap.at(name), position);
 	}
 
 };
@@ -161,7 +161,6 @@ struct Intersection {
 	Float3 normal;
 };
 
-using _BoxSet = MaterialBoxSet::_BoxSet;
 Intersection Intersects(Float3 origin, Float3 invRay, _BoxSet::Box box, Float3 boxOffset) {
 	static constexpr float lim = 1.0f / 256.0f;
 
@@ -291,18 +290,46 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 	return result;
 }
 
+void Print(_BoxSet* boxSet, uint nodeInd = 0, uint depth = 0) {
+	std::string space = std::string(depth * 4, ' ');
+
+	_BoxSet::Node node = boxSet->nodes[nodeInd];
+
+	std::cout << space << "{" << std::endl;
+	
+	std::cout << space << "Box: " << node.box.low.ToString() << " " << node.box.high.ToString() << std::endl;
+	std::cout << space << "Type: " << (int)node.type << std::endl;
+	if (node.type == _BoxSet::Node::Type::object) {
+
+	}
+	else {
+		std::cout << space << "Children:[" << std::endl;
+		for (uint childInd = node.child; childInd != _BoxSet::noInd; childInd = boxSet->containers[childInd].sibling) {
+			std::cout << space << childInd << ": " << std::endl;
+			std::cout << space << "Offset: " << boxSet->containers[childInd].offset.ToString() << std::endl;
+			std::cout << space << "Node: " << boxSet->containers[childInd].node << std::endl;
+			Print(boxSet, boxSet->containers[childInd].node, depth + 1);
+		}
+	}
+	std::cout << space << "]" << std::endl;
+	std::cout << space << "}" << std::endl;
+}
+
 int main() {
 
 	try {
-	
-		MaterialBoxSet::_BoxSet boxSet = {};
-		boxSet.Init(1024);
-		boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, {}, 0, 16.0f);
-		boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 1.0f, 0.0f, 0.0f }, 0, 16.0f);
 
-		return 0;
+		//_BoxSet boxSet = {};
+		//boxSet.Init(1024);
+		//Float3 offset = { 5.0f, 5.0f, 5.0f };
+		//boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, offset, 0, 16.0f);
+		//boxSet.RemoveObject({ {}, { 1.0f, 1.0f, 1.0f } }, offset, 0);
+		////boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, offset, 0, 16.0f);
+		////boxSet.RemoveObject({ {}, { 1.0f, 1.0f, 1.0f } }, offset, 0, 16.0f);
+		//Print(&boxSet);
+		//return 0;
 
-#if 0
+#if 1
 		Graphics::Device::Init();
 	
 		Int2 windowSize = { 1280, 720 };
@@ -409,7 +436,7 @@ int main() {
 		blocks.LoadBlock("podzol", "podzol_top.png");
 		blocks.LoadBlock("moss_block", "moss_block.png");
 		blocks.LoadBlock("mossy_cobblestone", "mossy_cobblestone.png");
-#if 0
+#if 1
 
 		{
 			std::ifstream ifile("taiga_150x50x150.mcw");
@@ -436,7 +463,7 @@ int main() {
 			ifile.close();
 		}
 #endif
-		blocks.InsertBlock("dirt", {});
+		//blocks.InsertBlock("dirt", {});
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 5, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 0, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 2.0f, 0.0f }, 0, 128.0f);
@@ -453,8 +480,8 @@ int main() {
 	
 		Clock<float> deltaClock;
 	
-		//Float3 offset = { 5.0f, 5.0f, 5.0f };
-		//blocks.InsertBlock("sand", offset);
+		Float3 offset = { -5.0f, 5.0f, 5.0f };
+		blocks.InsertBlock("sand", offset);
 
 		float speed = 5.0f;
 	
@@ -464,26 +491,27 @@ int main() {
 			
 			float deltaTime = deltaClock.Restart().Seconds();
 
-			//blocks.RemoveBlock("sand", offset);
-			//if (GetKeyState(VK_LEFT) & 0x8000) {
-			//	offset[2] -= speed * deltaTime;
-			//}
-			//if (GetKeyState(VK_RIGHT) & 0x8000) {
-			//	offset[2] += speed * deltaTime;
-			//}
-			//if (GetKeyState(VK_UP) & 0x8000) {
-			//	offset[1] += speed * deltaTime;
-			//}
-			//if (GetKeyState(VK_DOWN) & 0x8000) {
-			//	offset[1] -= speed * deltaTime;
-			//}
-			//if (GetKeyState(VK_NUMPAD8) & 0x8000) {
-			//	offset[0] += speed * deltaTime;
-			//}
-			//if (GetKeyState(VK_NUMPAD2) & 0x8000) {
-			//	offset[0] -= speed * deltaTime;
-			//}
-			//blocks.InsertBlock("sand", offset);
+			blocks.RemoveBlock("sand", offset);
+			if (GetKeyState(VK_LEFT) & 0x8000) {
+				offset[2] -= speed * deltaTime;
+			}
+			if (GetKeyState(VK_RIGHT) & 0x8000) {
+				offset[2] += speed * deltaTime;
+			}
+			if (GetKeyState(VK_UP) & 0x8000) {
+				offset[1] += speed * deltaTime;
+			}
+			if (GetKeyState(VK_DOWN) & 0x8000) {
+				offset[1] -= speed * deltaTime;
+			}
+			if (GetKeyState(VK_NUMPAD8) & 0x8000) {
+				offset[0] += speed * deltaTime;
+			}
+			if (GetKeyState(VK_NUMPAD2) & 0x8000) {
+				offset[0] -= speed * deltaTime;
+			}
+			blocks.InsertBlock("sand", offset);
+			std::cout << blocks.materialBoxSet.boxSet.nodes.nextElement << " " << blocks.materialBoxSet.boxSet.containers.nextElement << std::endl;
 
 			camera.Update(cmdList);
 			
