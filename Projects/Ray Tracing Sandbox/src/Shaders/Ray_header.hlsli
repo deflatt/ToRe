@@ -22,7 +22,8 @@ struct Link {
 struct Container {
     float3 offset;
     uint node;
-    Link siblingLink;
+    //Link siblingLink;
+    uint3 siblingLink[2];
 };
 StructuredBuffer<Container> containers : register(t1);
 
@@ -37,8 +38,10 @@ struct Box {
 #define NODE_TYPE_OBJECT 2
 
 struct Node {
-    Box box;
-    Link childLink;
+    //Box box;
+    float3 box[2];
+    //Link childLink;
+    uint3 childLink[2];
     NodeType type;
 };
 StructuredBuffer<Node> nodes : register(t2);

@@ -154,139 +154,113 @@ struct TraceResult {
 	uint ind;
 	Float3 pos;
 	Float3 normal;
-	uint numChecks;
+	uint numIts;
 };
-struct Intersection {
-	float sMin;
-	Float3 normal;
-};
-
-Intersection Intersects(Float3 origin, Float3 invRay, _BoxSet::Box box, Float3 boxOffset) {
-	static constexpr float lim = 1.0f / 256.0f;
-
-	Intersection result;
-	result.sMin = -std::numeric_limits<float>::infinity();
-	float sMax = std::numeric_limits<float>::infinity();
-	result.normal = 0.0f;
-	uint side = 0;
-
-	Float3 sLow = (boxOffset + box.low - origin) * invRay;
-	Float3 sHigh = (boxOffset + box.high - origin) * invRay;
-	for (uint i = 0; i < 3; i++) {
-		float sdMin = min(sLow[i], sHigh[i]);
-		float sdMax = max(sLow[i], sHigh[i]);
-
-		if (sdMin > result.sMin) {
-			result.sMin = sdMin;
-			side = i;
-		}
-		if (sdMax < sMax) {
-			sMax = sdMax;
-		}
-	}
-	result.sMin = max(result.sMin, lim);
-	if (result.sMin > sMax) {
-		result.sMin = -std::numeric_limits<float>::infinity();
-	}
-	else {
-		result.normal[side] = (invRay[side] > 0.0f) ? -1.0f : 1.0f;
-	}
-	return result;
-}
 
 #define MAX_LOCATION_SIZE 24
 
 TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 	Float3 invRay = ray;
 	invRay.Reciprocate();
-
-	static constexpr uint noInd = ~0;
+	Array<bool, 3> raySign = {};
+	for (uint i = 0; i < 3; i++)
+		raySign[i] = ray[i] < 0.0f;
 
 	TraceResult result;
 	result.scale = std::numeric_limits<float>::infinity();
-	result.ind = noInd;
-	result.numChecks = 0;
+	result.ind = _BoxSet::noInd;
+	result.pos = 0.0f;
+	result.normal = 0.0f;
+	result.numIts = 0;
 
 	_BoxSet::Container container;
 	_BoxSet::Node node;
-	bool newContainer = true;
-	Intersection intersection;
+	_BoxSet::Node childNode;
 
+	bool newContainer = true;
+	Float3 curOffset = 0.0f;
 	uint location[MAX_LOCATION_SIZE];
 	location[0] = 0;
 	uint curDepth = 0;
-	float minScales[MAX_LOCATION_SIZE];
-
-	Float3 curOffset = 0.0f;
-
-	uint curInd, lastChildInd;
-	float minScale;
-	float maxScale;
+	Uint3 links[MAX_LOCATION_SIZE];
 
 	while (true) {
-		if (curDepth == MAX_LOCATION_SIZE)
-			break;
-
-		curInd = location[curDepth];
-		if (!newContainer)
-			lastChildInd = location[curDepth + 1];
-
-		container = boxSet->containers[curInd];
+		std::cout << curDepth << " " << location[curDepth] << std::endl;
+		container = boxSet->containers[location[curDepth]];
 		node = boxSet->nodes[container.node];
 
 		if (newContainer) {
+			std::cout << location[curDepth] << " new" << std::endl;
 			curOffset += container.offset;
+			for (uint dim = 0; dim < 3; dim++)
+				links[curDepth][dim] = node.childLink[raySign[dim]][dim];
 		}
 
-		minScale = -std::numeric_limits<float>::infinity();
-		if (!newContainer)
-			minScale = minScales[curDepth];
+		float minScale = std::numeric_limits<float>::infinity();
+		uint minDim = _BoxSet::noInd;
+		for (uint dim = 0; dim < 3; dim++) {
+			for (uint childInd = links[curDepth][dim]; childInd != _BoxSet::noInd; childInd = boxSet->containers[childInd].siblingLink[raySign[dim]][dim], links[curDepth][dim] = childInd) {
+				result.numIts++;
+				childNode = boxSet->nodes[boxSet->containers[childInd].node];
 
-		maxScale = result.scale;
+				childNode.box[0] += curOffset + boxSet->containers[childInd].offset;
+				childNode.box[1] += curOffset + boxSet->containers[childInd].offset;
 
-		uint nextInd = noInd;
-		for (uint childInd = node.child; childInd != noInd; childInd = boxSet->containers[childInd].sibling) {
-			if (!newContainer && childInd == lastChildInd)
-				continue;
-			intersection = Intersects(origin, invRay, boxSet->nodes[boxSet->containers[childInd].node].box, curOffset + boxSet->containers[childInd].offset);
-			std::cout << "Checked against " << childInd << std::endl;
-			result.numChecks++;
-			if (intersection.sMin == -std::numeric_limits<float>::infinity())
-				continue;
-			if (intersection.sMin < minScale || intersection.sMin > maxScale
-				|| (intersection.sMin == minScale && (!newContainer && childInd <= lastChildInd))
-				|| (intersection.sMin == maxScale && nextInd != noInd && childInd > nextInd))
-				continue;
-			if (boxSet->nodes[boxSet->containers[childInd].node].type == _BoxSet::Node::Type::object) {
-				if (intersection.sMin < result.scale) {
-					result.scale = intersection.sMin;
-					result.ind = boxSet->nodes[boxSet->containers[childInd].node].child;
-					result.normal = intersection.normal;
-					result.pos = origin + ray * result.scale;
+				float curScale = (childNode.box[raySign[dim]][dim] - origin[dim]) * invRay[dim];
+				curScale = max(curScale, 0.0f);
+				if (curScale >= result.scale)
+					break;
+
+				Float3 pos = origin + ray * curScale;
+				if (curScale > 0.0f)
+					pos[dim] = childNode.box[raySign[dim]][dim];
+
+				bool inside = true;
+				for (uint i = 0; i < 3; i++){
+					if (pos[dim] < childNode.box.low[dim] || pos[dim] > childNode.box.high[dim]) {
+						inside = false;
+						break;
+					}
 				}
-				continue;
+				if (!inside)
+					continue;
+				if (childNode.type == _BoxSet::Node::Type::object) {
+					if (curScale < _BoxSet::lim)
+						continue;
+					result.ind = childNode.childLink[0][0];
+					result.scale = curScale;
+					result.pos = pos;
+					result.normal = 0.0f;
+					result.normal[dim] = raySign[dim] ? 1.0f : -1.0f;
+					break;
+				}
+				else {
+					if (curScale < minScale) {
+						minScale = curScale;
+						minDim = dim;
+					}
+					break;
+				}
 			}
-			maxScale = intersection.sMin;
-			nextInd = childInd;
 		}
-		if (nextInd != noInd) {
-			std::cout << "Entered " << nextInd << std::endl;
-			location[curDepth + 1] = nextInd;
-			minScales[curDepth] = maxScale;
+		if (minDim != _BoxSet::noInd) {
+			if (curDepth + 1 == MAX_LOCATION_SIZE) {
+				result.ind = _BoxSet::noInd;
+				break;
+			}
+			location[curDepth + 1] = links[curDepth][minDim];
+			links[curDepth][minDim] = boxSet->containers[links[curDepth][minDim]].siblingLink[raySign[minDim]][minDim];
 			newContainer = true;
 			curDepth++;
 		}
 		else {
 			if (curDepth == 0)
 				break;
-			std::cout << "Discarded " << curInd << std::endl;
-			newContainer = false;
 			curOffset -= container.offset;
+			newContainer = false;
 			curDepth--;
 		}
 	}
-	if (result.ind != noInd)
-		result.pos = origin + ray * result.scale;
 	return result;
 }
 
@@ -421,6 +395,7 @@ int main() {
 		denoiser.Init((Long2)windowSize, cmdList);
 		std::cout << "Initialized denoiser" << std::endl;
 
+#if 0
 		blocks.LoadBlock("dirt", "dirt.png");
 		blocks.LoadBlock("sand", "sand.png");
 		blocks.LoadBlock("stone", "stone.png");
@@ -436,10 +411,10 @@ int main() {
 		blocks.LoadBlock("podzol", "podzol_top.png");
 		blocks.LoadBlock("moss_block", "moss_block.png");
 		blocks.LoadBlock("mossy_cobblestone", "mossy_cobblestone.png");
-#if 1
 
 		{
-			std::ifstream ifile("taiga_150x50x150.mcw");
+			//std::ifstream ifile("taiga_150x50x150.mcw");
+			std::ifstream ifile("savanna_30x20x30.mcw");
 			Int3 origin, size;
 			for (size_t i = 0; i < 3; i++) {
 				ifile >> origin[i] >> size[i];
@@ -464,8 +439,34 @@ int main() {
 		}
 #endif
 		//blocks.InsertBlock("dirt", {});
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 5, 128.0f);
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 0, 128.0f);
+		for (int x = 0; x < 1; x++) {
+			for (int y = 0; y < 1; y++) {
+				for (int z = 0; z < 1; z++) {
+					MaterialBoxSet::Material mat = {};
+					mat.emission = {};
+					mat.reflection = { (float)x, (float)y, (float)z };
+					uint matInd = blocks.materialBoxSet.GetMaterial(mat);
+					blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { (float)x * 1, (float)y * 1, (float)z * 1 }, matInd, 16.0f);
+				}
+			}
+		}
+		Print(&blocks.materialBoxSet.boxSet);
+		TraceResult trace = Trace(&blocks.materialBoxSet.boxSet, { 0.0f, 0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f });
+		std::cout << trace.numIts << std::endl;
+		return 0;
+
+		//{
+		//	_BoxSet& boxSet = blocks.materialBoxSet.boxSet;
+		//	for (uint childInd = boxSet.nodes[1769].child; childInd != _BoxSet::noInd; childInd = boxSet.containers[childInd].sibling) {
+		//		float f = boxSet.containers[childInd].offset[0];
+		//		std::cout << f << std::endl;
+		//	}
+		//}
+
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 0, 128.0f);
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 1, 128.0f);
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 2, 128.0f);
+		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 3, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 2.0f, 0.0f }, 0, 128.0f);
 		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 2.0f, 0.0f }, 0, 128.0f);
 
@@ -480,8 +481,8 @@ int main() {
 	
 		Clock<float> deltaClock;
 	
-		Float3 offset = { -5.0f, 5.0f, 5.0f };
-		blocks.InsertBlock("sand", offset);
+		//Float3 offset = { 5.0f, 5.0f, 5.0f };
+		//blocks.InsertBlock("sand", offset);
 
 		float speed = 5.0f;
 	
@@ -491,27 +492,27 @@ int main() {
 			
 			float deltaTime = deltaClock.Restart().Seconds();
 
-			blocks.RemoveBlock("sand", offset);
-			if (GetKeyState(VK_LEFT) & 0x8000) {
-				offset[2] -= speed * deltaTime;
-			}
-			if (GetKeyState(VK_RIGHT) & 0x8000) {
-				offset[2] += speed * deltaTime;
-			}
-			if (GetKeyState(VK_UP) & 0x8000) {
-				offset[1] += speed * deltaTime;
-			}
-			if (GetKeyState(VK_DOWN) & 0x8000) {
-				offset[1] -= speed * deltaTime;
-			}
-			if (GetKeyState(VK_NUMPAD8) & 0x8000) {
-				offset[0] += speed * deltaTime;
-			}
-			if (GetKeyState(VK_NUMPAD2) & 0x8000) {
-				offset[0] -= speed * deltaTime;
-			}
-			blocks.InsertBlock("sand", offset);
-			std::cout << blocks.materialBoxSet.boxSet.nodes.nextElement << " " << blocks.materialBoxSet.boxSet.containers.nextElement << std::endl;
+			//blocks.RemoveBlock("sand", offset);
+			//if (GetKeyState(VK_LEFT) & 0x8000) {
+			//	offset[2] -= speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_RIGHT) & 0x8000) {
+			//	offset[2] += speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_UP) & 0x8000) {
+			//	offset[1] += speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_DOWN) & 0x8000) {
+			//	offset[1] -= speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_NUMPAD8) & 0x8000) {
+			//	offset[0] += speed * deltaTime;
+			//}
+			//if (GetKeyState(VK_NUMPAD2) & 0x8000) {
+			//	offset[0] -= speed * deltaTime;
+			//}
+			//blocks.InsertBlock("sand", offset);
+			//std::cout << blocks.materialBoxSet.boxSet.nodes.nextElement << " " << blocks.materialBoxSet.boxSet.containers.nextElement << std::endl;
 
 			camera.Update(cmdList);
 			

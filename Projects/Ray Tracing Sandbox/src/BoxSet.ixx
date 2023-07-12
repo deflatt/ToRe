@@ -100,6 +100,9 @@ struct BoxSet {
 		bool AlmostEquals(const Box& that, T_val maxError = 1.0 / 256.0) const {
 			return BoxSet::AlmostEquals(low, that.low) && BoxSet::AlmostEquals(high, that.high);
 		}
+		Vector& operator[](bool i) {
+			return i ? high : low;
+		}
 	};
 
 	template <typename T>
@@ -303,9 +306,11 @@ protected:
 		for (size_t i = 0; i < numDims; i++) {
 			// Insert into the i-th low linked list, sorted increasingly
 			auto Less = [this, i](T_ind a, T_ind b) {
-				if (containers[a].offset[i] == containers[b].offset[i])
+				T_val aVal = containers[a].offset[i] + nodes[containers[a].node].box.low[i];
+				T_val bVal = containers[b].offset[i] + nodes[containers[b].node].box.low[i];
+				if (aVal == bVal)
 					return a <= b;
-				return containers[a].offset[i] <= containers[b].offset[i];
+				return aVal <= bVal;
 			};
 			if (link.low[i] == noInd || Less(childInd, link.low[i])) {
 				container.siblingLink.low[i] = link.low[i];
@@ -314,7 +319,13 @@ protected:
 			else {
 				for (T_ind itInd = link.low[i]; itInd != noInd; itInd = containers[itInd].siblingLink.low[i]) {
 					Link& siblingLink = containers[itInd].siblingLink;
-					if (siblingLink.low[i] == noInd || Less(itInd, siblingLink.low[i])) {
+					if (siblingLink.low[i] != noInd) {
+						T_ind a = itInd;
+						T_ind b = siblingLink.low[i];
+						T_val aVal = containers[a].offset[i] + nodes[containers[a].node].box.low[i];
+						T_val bVal = containers[b].offset[i] + nodes[containers[b].node].box.low[i];
+					}
+					if (siblingLink.low[i] == noInd || Less(childInd, siblingLink.low[i])) {
 						container.siblingLink.low[i] = siblingLink.low[i];
 						siblingLink.low[i] = childInd;
 						break;
@@ -324,9 +335,11 @@ protected:
 
 			// Insert into the i-th high linked list, sorted decreasingly
 			auto Greater = [this, i](T_ind a, T_ind b) {
-				if (containers[a].offset[i] == containers[b].offset[i])
+				T_val aVal = containers[a].offset[i] + nodes[containers[a].node].box.high[i];
+				T_val bVal = containers[b].offset[i] + nodes[containers[b].node].box.high[i];
+				if (aVal == bVal)
 					return a <= b;
-				return containers[a].offset[i] >= containers[b].offset[i];
+				return aVal >= bVal;
 			};
 			if (link.high[i] == noInd || Greater(childInd, link.high[i])) {
 				container.siblingLink.high[i] = link.high[i];
@@ -335,7 +348,7 @@ protected:
 			else {
 				for (T_ind itInd = link.high[i]; itInd != noInd; itInd = containers[itInd].siblingLink.high[i]) {
 					Link& siblingLink = containers[itInd].siblingLink;
-					if (siblingLink.high[i] == noInd || Greater(itInd, siblingLink.high[i])) {
+					if (siblingLink.high[i] == noInd || Greater(childInd, siblingLink.high[i])) {
 						container.siblingLink.high[i] = siblingLink.high[i];
 						siblingLink.high[i] = childInd;
 						break;

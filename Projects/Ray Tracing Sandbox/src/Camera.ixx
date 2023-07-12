@@ -28,7 +28,7 @@ export struct Camera {
 		Uint2 windowSize = {};
 	} info = {};
 
-	float speed = 15.0f;
+	float speed = 1.5f;
 	float acceleration = 10.0f;
 	float sensitivity = 0.001f;
 

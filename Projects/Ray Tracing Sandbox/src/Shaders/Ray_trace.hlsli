@@ -6,128 +6,97 @@ struct TraceResult {
     float3 pos;
     float3 normal;
 };
-struct Intersection {
-    float sMin;
-    float3 normal;
-};
 
-static uint numIntersectionChecks = 0;
-Intersection Intersects(float3 origin, float3 invRay, Box box, float3 boxOffset){
-    numIntersectionChecks++;
-
-    Intersection result;
-    result.sMin = -1.#INF;
-    float sMax = 1.#INF;
-    result.normal = 0.0f;
-    uint side = 0;
-    
-    float3 sLow = (boxOffset + box.low - origin) * invRay;
-    float3 sHigh = (boxOffset + box.high - origin) * invRay;
-    [unroll(3)] for (uint i = 0; i < 3; i++){
-        float sdMin = min(sLow[i], sHigh[i]);
-        float sdMax = max(sLow[i], sHigh[i]);
-        
-        if (sdMin > result.sMin){
-            result.sMin = sdMin;
-            side = i;
-        }
-        if (sdMax < sMax){
-            sMax = sdMax;
-        }
-    }
-    result.sMin = max(result.sMin, lim);
-    if (result.sMin > sMax){
-        result.sMin = -1.#INF;
-    }
-    else {
-        result.normal[side] = (invRay[side] > 0.0f) ? -1.0f : 1.0f;
-    }
-    return result;
-}
-
+static uint numIts = 0;
 TraceResult Trace(float3 origin, float3 ray){
     const float3 invRay = 1.0f / ray;
+    const bool3 raySign = (ray < 0.0f);
     
     TraceResult result;
     result.scale = 1.#INF;
     result.ind = noInd;
+    result.pos = 0.0f;
+    result.normal = 0.0f;
     
     Container container;
     Node node;
-    bool newContainer = true;
-    Intersection intersection;
+    Node childNode;
     
+    bool newContainer = true;
+    float3 curOffset = 0.0f;
     uint location[MAX_LOCATION_SIZE];
     location[0] = 0;
     uint curDepth = 0;
-    float minScales[MAX_LOCATION_SIZE];
-    
-    float3 curOffset = 0.0f;
-    
-    uint curInd, lastChildInd;
-    float minScale;
-    float maxScale;
+    uint3 links[MAX_LOCATION_SIZE];
     
     [loop] while (true) {
-        if (curDepth == MAX_LOCATION_SIZE)
-            break;
-        
-        curInd = location[curDepth];
-        if (!newContainer)
-            lastChildInd = location[curDepth + 1];
-        
-        container = containers[curInd];
+        container = containers[location[curDepth]];
         node = nodes[container.node];
         
-        if (newContainer) {
+        if (newContainer){
             curOffset += container.offset;
+            for (uint dim = 0; dim < 3; dim++)
+                links[curDepth][dim] = node.childLink[raySign[dim]][dim];   
         }
         
-        minScale = -1.#INF;
-        if (!newContainer)
-            minScale = minScales[curDepth];
-            //minScale = Intersects(origin, invRay, nodes[containers[lastChildInd].node].box, curOffset + containers[lastChildInd].offset).sMin;
-        
-        maxScale = result.scale;
-        
-        uint nextInd = noInd;
-        [loop] for (uint childInd = node.childLink.low[0]; childInd != noInd; childInd = containers[childInd].siblingLink.low[0]){
-            if (!newContainer && childInd == lastChildInd)
-                continue;
-            intersection = Intersects(origin, invRay, nodes[containers[childInd].node].box, curOffset + containers[childInd].offset);
-            if (intersection.sMin == -1.#INF)
-                continue;
-            if (intersection.sMin < minScale || intersection.sMin > maxScale
-                || (intersection.sMin == minScale && (!newContainer && childInd <= lastChildInd))
-                || (intersection.sMin == maxScale && nextInd != noInd && childInd > nextInd))
-                continue;
-            if (nodes[containers[childInd].node].type == NODE_TYPE_OBJECT) {
-                if (intersection.sMin < result.scale) {
-                    result.scale = intersection.sMin;
-                    result.ind = nodes[containers[childInd].node].childLink.low[0];
-                    result.normal = intersection.normal;
-                    result.pos = origin + ray * result.scale;
+        float minScale = 1.#INF;
+        uint minDim = noInd;
+        for (uint dim = 0; dim < 3; dim++){
+            for (uint childInd = links[curDepth][dim]; childInd != noInd; childInd = containers[childInd].siblingLink[raySign[dim]][dim], links[curDepth][dim] = childInd){
+                numIts++;
+                childNode = nodes[containers[childInd].node];
+                
+                childNode.box[0] += curOffset + containers[childInd].offset;
+                childNode.box[1] += curOffset + containers[childInd].offset;
+            
+                float curScale = (childNode.box[raySign[dim]][dim] - origin[dim]) * invRay[dim];
+                curScale = max(curScale, 0.0f);
+                if (curScale >= result.scale)
+                    break;
+            
+                float3 pos = origin + ray * curScale;
+                if (curScale > 0.0f)
+                    pos[dim] = childNode.box[raySign[dim]][dim];
+            
+                if (!(all(pos >= childNode.box[0]) && all(pos <= childNode.box[1])))
+                    continue;
+
+                if (childNode.type == NODE_TYPE_OBJECT) {
+                    if (curScale < lim)
+                        continue;
+                    result.ind = childNode.childLink[0][0];
+                    result.scale = curScale;
+                    result.pos = pos;
+                    result.normal = 0.0f;
+                    result.normal[dim] = raySign[dim] ? 1.0f : -1.0f;
+                    break;
                 }
-                continue;
+                else {
+                    if (curScale < minScale) {
+                        minScale = curScale;
+                        minDim = dim;
+                    }
+                    break;
+                }
             }
-            maxScale = intersection.sMin;
-            nextInd = childInd;
         }
-        if (nextInd != noInd) {
-            location[curDepth + 1] = nextInd;
-            minScales[curDepth] = maxScale;
+        if (minDim != noInd){
+            if (curDepth + 1 == MAX_LOCATION_SIZE){
+                result.ind = noInd;
+                break;
+            }
+            location[curDepth + 1] = links[curDepth][minDim];
+            links[curDepth][minDim] = containers[links[curDepth][minDim]].siblingLink[raySign[minDim]][minDim];
             newContainer = true;
             curDepth++;
         }
         else {
             if (curDepth == 0)
                 break;
-            newContainer = false;
             curOffset -= container.offset;
+            newContainer = false;
             curDepth--;
         }
     }
-    if (result.ind != noInd)
-        result.pos = origin + ray * result.scale;
     return result;
 }

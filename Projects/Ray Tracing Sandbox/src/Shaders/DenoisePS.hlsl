@@ -41,6 +41,7 @@ float4 main(VSOutput vsOutput) : SV_TARGET
     if (inInfo.ind == noInd){
         return float4(inInfo.incomingLight, 1.0f);
     }
+    return float4(materials[inInfo.ind].reflection, 1.0f);
     uint side = 0;
     for (; side < 3; side++){
         if (inInfo.normal[side] != 0.0f)
