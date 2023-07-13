@@ -303,55 +303,34 @@ protected:
 		Node& parentNode = nodes[parentNodeInd];
 		Link& link = parentNode.childLink;
 
-		for (size_t i = 0; i < numDims; i++) {
-			// Insert into the i-th low linked list, sorted increasingly
-			auto Less = [this, i](T_ind a, T_ind b) {
-				T_val aVal = containers[a].offset[i] + nodes[containers[a].node].box.low[i];
-				T_val bVal = containers[b].offset[i] + nodes[containers[b].node].box.low[i];
+		for (size_t dim = 0; dim < numDims; dim++) {
+			auto Less = [this, dim](T_ind a, T_ind b) {
+				T_val aVal = containers[a].offset[dim] + nodes[containers[a].node].box.low[dim];
+				T_val bVal = containers[b].offset[dim] + nodes[containers[b].node].box.low[dim];
 				if (aVal == bVal)
 					return a <= b;
 				return aVal <= bVal;
 			};
-			if (link.low[i] == noInd || Less(childInd, link.low[i])) {
-				container.siblingLink.low[i] = link.low[i];
-				link.low[i] = childInd;
-			}
-			else {
-				for (T_ind itInd = link.low[i]; itInd != noInd; itInd = containers[itInd].siblingLink.low[i]) {
-					Link& siblingLink = containers[itInd].siblingLink;
-					if (siblingLink.low[i] != noInd) {
-						T_ind a = itInd;
-						T_ind b = siblingLink.low[i];
-						T_val aVal = containers[a].offset[i] + nodes[containers[a].node].box.low[i];
-						T_val bVal = containers[b].offset[i] + nodes[containers[b].node].box.low[i];
-					}
-					if (siblingLink.low[i] == noInd || Less(childInd, siblingLink.low[i])) {
-						container.siblingLink.low[i] = siblingLink.low[i];
-						siblingLink.low[i] = childInd;
-						break;
-					}
-				}
-			}
-
-			// Insert into the i-th high linked list, sorted decreasingly
-			auto Greater = [this, i](T_ind a, T_ind b) {
-				T_val aVal = containers[a].offset[i] + nodes[containers[a].node].box.high[i];
-				T_val bVal = containers[b].offset[i] + nodes[containers[b].node].box.high[i];
+			auto Greater = [this, dim](T_ind a, T_ind b) {
+				T_val aVal = containers[a].offset[dim] + nodes[containers[a].node].box.high[dim];
+				T_val bVal = containers[b].offset[dim] + nodes[containers[b].node].box.high[dim];
 				if (aVal == bVal)
 					return a <= b;
 				return aVal >= bVal;
 			};
-			if (link.high[i] == noInd || Greater(childInd, link.high[i])) {
-				container.siblingLink.high[i] = link.high[i];
-				link.high[i] = childInd;
-			}
-			else {
-				for (T_ind itInd = link.high[i]; itInd != noInd; itInd = containers[itInd].siblingLink.high[i]) {
-					Link& siblingLink = containers[itInd].siblingLink;
-					if (siblingLink.high[i] == noInd || Greater(childInd, siblingLink.high[i])) {
-						container.siblingLink.high[i] = siblingLink.high[i];
-						siblingLink.high[i] = childInd;
-						break;
+			for (size_t bound = 0; bound < 2; bound++) {
+				if (link[bound][dim] == noInd || ((bound == 0) ? Less(childInd, link[bound][dim]) : Greater(childInd, link[bound][dim]))) {
+					container.siblingLink[bound][dim] = link[bound][dim];
+					link[bound][dim] = childInd;
+				}
+				else {
+					for (T_ind itInd = link[bound][dim]; itInd != noInd; itInd = containers[itInd].siblingLink[bound][dim]) {
+						Link& siblingLink = containers[itInd].siblingLink;
+						if (siblingLink[bound][dim] == noInd || ((bound == 0) ? Less(childInd, siblingLink[bound][dim]) : Greater(childInd, siblingLink[bound][dim]))) {
+							container.siblingLink[bound][dim] = siblingLink[bound][dim];
+							siblingLink[bound][dim] = childInd;
+							break;
+						}
 					}
 				}
 			}

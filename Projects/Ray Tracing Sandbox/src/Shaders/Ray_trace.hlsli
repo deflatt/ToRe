@@ -60,6 +60,17 @@ TraceResult Trace(float3 origin, float3 ray){
             
                 if (!(all(pos >= childNode.box[0]) && all(pos <= childNode.box[1])))
                     continue;
+                //bool inside = true;
+                //for (uint dim2 = 0; dim2 < 3; dim2++) {
+                //    if (dim2 == dim)
+                //        continue;
+                //    if (pos[dim2] < childNode.box[0][dim2] || pos[dim2] > childNode.box[1][dim2]) {
+                //        inside = false;
+                //        break;
+                //    }
+                //}
+                //if (!inside)
+                //    continue;
 
                 if (childNode.type == NODE_TYPE_OBJECT) {
                     if (curScale < lim)
@@ -85,8 +96,12 @@ TraceResult Trace(float3 origin, float3 ray){
                 result.ind = noInd;
                 break;
             }
-            location[curDepth + 1] = links[curDepth][minDim];
-            links[curDepth][minDim] = containers[links[curDepth][minDim]].siblingLink[raySign[minDim]][minDim];
+            uint nextInd = links[curDepth][minDim];
+            location[curDepth + 1] = nextInd;
+            for (uint dim = 0; dim < 3; dim++) {
+                if (links[curDepth][dim] == nextInd)
+                    links[curDepth][dim] = containers[links[curDepth][dim]].siblingLink[raySign[dim]][dim];
+            }
             newContainer = true;
             curDepth++;
         }

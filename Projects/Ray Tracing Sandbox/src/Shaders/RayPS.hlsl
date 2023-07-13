@@ -6,7 +6,7 @@ float4 main(VSOutput vsOutput) : SV_TARGET
     vsOutput.sightRay = normalize(vsOutput.sightRay);
     
     LightTrace(camera[0].position, vsOutput.sightRay);
-    float3 col = (float)numIts / 50.0f / 255.0f;
+    float3 col = (float)numIts / 1.0f / 255.0f;
     return float4(col, 1.0f);
     return 0.0f; // discard; ?
     

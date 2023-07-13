@@ -185,12 +185,11 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 	Uint3 links[MAX_LOCATION_SIZE];
 
 	while (true) {
-		std::cout << curDepth << " " << location[curDepth] << std::endl;
+		//std::cout << "Entered " << location[curDepth] << " at depth " << curDepth << (newContainer ? " (new)" : " (old)") << std::endl;
 		container = boxSet->containers[location[curDepth]];
 		node = boxSet->nodes[container.node];
 
 		if (newContainer) {
-			std::cout << location[curDepth] << " new" << std::endl;
 			curOffset += container.offset;
 			for (uint dim = 0; dim < 3; dim++)
 				links[curDepth][dim] = node.childLink[raySign[dim]][dim];
@@ -208,12 +207,14 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 
 				float curScale = (childNode.box[raySign[dim]][dim] - origin[dim]) * invRay[dim];
 				curScale = max(curScale, 0.0f);
+				//std::cout << "Traced to container " << childInd << " dim " << dim << ". \nScale: " << curScale << std::endl;
 				if (curScale >= result.scale)
 					break;
 
 				Float3 pos = origin + ray * curScale;
 				if (curScale > 0.0f)
 					pos[dim] = childNode.box[raySign[dim]][dim];
+				//std::cout << "Pos: " << pos.ToString() << std::endl;
 
 				bool inside = true;
 				for (uint i = 0; i < 3; i++){
@@ -222,6 +223,7 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 						break;
 					}
 				}
+				//std::cout << (inside ? "" : "not ") << "inside" << std::endl;
 				if (!inside)
 					continue;
 				if (childNode.type == _BoxSet::Node::Type::object) {
@@ -248,8 +250,12 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 				result.ind = _BoxSet::noInd;
 				break;
 			}
-			location[curDepth + 1] = links[curDepth][minDim];
-			links[curDepth][minDim] = boxSet->containers[links[curDepth][minDim]].siblingLink[raySign[minDim]][minDim];
+			uint nextInd = links[curDepth][minDim];
+			location[curDepth + 1] = nextInd;
+			for (uint dim = 0; dim < 3; dim++) {
+				if (links[curDepth][dim] == nextInd)
+					links[curDepth][dim] = boxSet->containers[links[curDepth][dim]].siblingLink[raySign[dim]][dim];
+			}
 			newContainer = true;
 			curDepth++;
 		}
@@ -264,7 +270,7 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 	return result;
 }
 
-void Print(_BoxSet* boxSet, uint nodeInd = 0, uint depth = 0) {
+void Print(_BoxSet* boxSet, bool bound, uint axis, uint nodeInd = 0, uint depth = 0) {
 	std::string space = std::string(depth * 4, ' ');
 
 	_BoxSet::Node node = boxSet->nodes[nodeInd];
@@ -278,11 +284,11 @@ void Print(_BoxSet* boxSet, uint nodeInd = 0, uint depth = 0) {
 	}
 	else {
 		std::cout << space << "Children:[" << std::endl;
-		for (uint childInd = node.child; childInd != _BoxSet::noInd; childInd = boxSet->containers[childInd].sibling) {
+		for (uint childInd = node.childLink[bound][axis]; childInd != _BoxSet::noInd; childInd = boxSet->containers[childInd].siblingLink[bound][axis]) {
 			std::cout << space << childInd << ": " << std::endl;
 			std::cout << space << "Offset: " << boxSet->containers[childInd].offset.ToString() << std::endl;
 			std::cout << space << "Node: " << boxSet->containers[childInd].node << std::endl;
-			Print(boxSet, boxSet->containers[childInd].node, depth + 1);
+			Print(boxSet, bound, axis, boxSet->containers[childInd].node, depth + 1);
 		}
 	}
 	std::cout << space << "]" << std::endl;
@@ -439,43 +445,36 @@ int main() {
 		}
 #endif
 		//blocks.InsertBlock("dirt", {});
-		for (int x = 0; x < 1; x++) {
-			for (int y = 0; y < 1; y++) {
-				for (int z = 0; z < 1; z++) {
+		int rad = 16;
+		for (int x = 0; x < rad; x++) {
+			for (int y = 0; y < rad; y++) {
+				for (int z = 0; z < rad; z++) {
 					MaterialBoxSet::Material mat = {};
 					mat.emission = {};
-					mat.reflection = { (float)x, (float)y, (float)z };
+					mat.reflection = { (float)x / ((float)rad - 1.0f), (float)y / ((float)rad - 1.0f), (float)z / ((float)rad - 1.0f) };
 					uint matInd = blocks.materialBoxSet.GetMaterial(mat);
-					blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { (float)x * 1, (float)y * 1, (float)z * 1 }, matInd, 16.0f);
+					blocks.materialBoxSet.boxSet.InsertObject({ {},{ 1.0f / (float)rad, 1.0f / (float)rad, 1.0f / (float)rad}}, {(float)x * 1.0f / (float)rad, (float)y * 1.0f / (float)rad, (float)z * 1.0f / (float)rad }, matInd, 16.0f);
 				}
 			}
 		}
-		Print(&blocks.materialBoxSet.boxSet);
-		TraceResult trace = Trace(&blocks.materialBoxSet.boxSet, { 0.0f, 0.5f, 0.5f }, { -1.0f, 0.0f, 0.0f });
-		std::cout << trace.numIts << std::endl;
-		return 0;
-
 		//{
-		//	_BoxSet& boxSet = blocks.materialBoxSet.boxSet;
-		//	for (uint childInd = boxSet.nodes[1769].child; childInd != _BoxSet::noInd; childInd = boxSet.containers[childInd].sibling) {
-		//		float f = boxSet.containers[childInd].offset[0];
-		//		std::cout << f << std::endl;
-		//	}
+		//	MaterialBoxSet::Material mat = {};
+		//	mat.emission = {};
+		//	mat.reflection = { 0.5f, 0.5f, 0.5f };
+		//	uint matInd = blocks.materialBoxSet.GetMaterial(mat);
+		//	blocks.materialBoxSet.boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 1.0f, 0.0f }, matInd, 2.0f);
+		//	blocks.materialBoxSet.boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 1.0f, 0.0f, 1.0f }, matInd, 2.0f);
+		//	blocks.materialBoxSet.boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 0.0f }, matInd, 2.0f);
 		//}
+		//Print(&blocks.materialBoxSet.boxSet, 0, 0);
 
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 0.0f, 0.0f }, 0, 128.0f);
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 1, 128.0f);
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 2, 128.0f);
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 0.0f, 0.0f }, 3, 128.0f);
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 0.0f, 2.0f, 0.0f }, 0, 128.0f);
-		//blocks.materialBoxSet.boxSet.InsertObject({ {},{1.0f, 1.0f, 1.0f} }, { 2.0f, 2.0f, 0.0f }, 0, 128.0f);
+		TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { 3.0f / 8.0f, 5.0 / 8.0f, 1.0f }, { 1.0f, 0.0f, 1.0f });
 
-		//TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { -1.0f, 0.5f, 0.5f }, { 1.0f, 0.0f, 0.0f });
-		//std::cout << "Scale: " << result.scale << std::endl;
-		//std::cout << "Index: " << result.ind << std::endl;
-		//std::cout << "Position: " << result.pos.ToString() << std::endl;
-		//std::cout << "Normal: " << result.normal.ToString() << std::endl;
-		//std::cout << "Num checks: " << result.numChecks << std::endl;
+		std::cout << "Scale: " << result.scale << std::endl;
+		std::cout << "Index: " << result.ind << std::endl;
+		std::cout << "Position: " << result.pos.ToString() << std::endl;
+		std::cout << "Normal: " << result.normal.ToString() << std::endl;
+		std::cout << "Num iterations: " << result.numIts << std::endl;
 
 		State::Init(window.window.hwnd);
 	
