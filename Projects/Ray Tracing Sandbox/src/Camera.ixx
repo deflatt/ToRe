@@ -16,13 +16,14 @@ export import TR.Windows.RawMouseListener;
 import State;
 
 import <algorithm>;
+import <iostream>;
 
 using namespace TR;
 
 export struct Camera {
 
 	struct Info {
-		Float3 position = {};
+		Float3 position = { 1.595511, 1.351811, 0.328708 };
 		Float2 rotation = {};
 		float fov = 3.14f / 2.0f;
 		Uint2 windowSize = {};
@@ -78,5 +79,8 @@ export struct Camera {
 		buffer.Upload(&info, cmdList);
 	}
 
+	void Print() {
+		std::cout << "Camera: " << info.position.ToString() << " " << info.rotation.ToString() << std::endl;
+	}
 
 };

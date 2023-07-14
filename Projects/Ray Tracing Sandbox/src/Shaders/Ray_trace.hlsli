@@ -5,6 +5,7 @@ struct TraceResult {
     uint ind;
     float3 pos;
     float3 normal;
+    Node node;
 };
 
 static uint numIts = 0;
@@ -18,10 +19,6 @@ TraceResult Trace(float3 origin, float3 ray){
     result.pos = 0.0f;
     result.normal = 0.0f;
     
-    Container container;
-    Node node;
-    Node childNode;
-    
     bool newContainer = true;
     float3 curOffset = 0.0f;
     uint location[MAX_LOCATION_SIZE];
@@ -30,8 +27,8 @@ TraceResult Trace(float3 origin, float3 ray){
     uint3 links[MAX_LOCATION_SIZE];
     
     [loop] while (true) {
-        container = containers[location[curDepth]];
-        node = nodes[container.node];
+        Container container = containers[location[curDepth]];
+        Node node = nodes[container.node];
         
         if (newContainer){
             curOffset += container.offset;
@@ -42,9 +39,9 @@ TraceResult Trace(float3 origin, float3 ray){
         float minScale = 1.#INF;
         uint minDim = noInd;
         for (uint dim = 0; dim < 3; dim++){
-            for (uint childInd = links[curDepth][dim]; childInd != noInd; childInd = containers[childInd].siblingLink[raySign[dim]][dim], links[curDepth][dim] = childInd){
-                numIts++;
-                childNode = nodes[containers[childInd].node];
+            [loop] for (uint childInd = links[curDepth][dim]; childInd != noInd; childInd = containers[childInd].siblingLink[raySign[dim]][dim], links[curDepth][dim] = childInd){
+                //numIts++;
+                Node childNode = nodes[containers[childInd].node];
                 
                 childNode.box[0] += curOffset + containers[childInd].offset;
                 childNode.box[1] += curOffset + containers[childInd].offset;
@@ -75,11 +72,13 @@ TraceResult Trace(float3 origin, float3 ray){
                 if (childNode.type == NODE_TYPE_OBJECT) {
                     if (curScale < lim)
                         continue;
+                    numIts++;
                     result.ind = childNode.childLink[0][0];
                     result.scale = curScale;
                     result.pos = pos;
                     result.normal = 0.0f;
                     result.normal[dim] = raySign[dim] ? 1.0f : -1.0f;
+                    result.node = childNode;
                     break;
                 }
                 else {

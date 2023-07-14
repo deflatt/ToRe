@@ -130,7 +130,10 @@ struct BlockBoxSet {
 					material.reflection = (Float3)byteCol / 255.0f;
 					material.emission = {};
 
-					materialBoxSet.boxSet.InsertObject({ {}, size }, pos, materialBoxSet.GetMaterial(material), 1.0f, rootInd);
+					_BoxSet::Box box = {};
+					box.low = 0.0f;
+					box.high = size;
+					materialBoxSet.boxSet.InsertObject(box, pos, materialBoxSet.GetMaterial(material), 1.0f, rootInd);
 				}
 			}
 		}
@@ -218,7 +221,7 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 
 				bool inside = true;
 				for (uint i = 0; i < 3; i++){
-					if (pos[dim] < childNode.box.low[dim] || pos[dim] > childNode.box.high[dim]) {
+					if (pos[i] < childNode.box.low[i] || pos[i] > childNode.box.high[i]) {
 						inside = false;
 						break;
 					}
@@ -234,6 +237,8 @@ TraceResult Trace(_BoxSet* boxSet, Float3 origin, Float3 ray) {
 					result.pos = pos;
 					result.normal = 0.0f;
 					result.normal[dim] = raySign[dim] ? 1.0f : -1.0f;
+					std::cout << "Hit at " << pos.ToString() << " with curOffset " << curOffset.ToString() << " dim " << dim << std::endl;
+					std::cout << childNode.box.low.ToString() << " " << childNode.box.high.ToString() << std::endl;
 					break;
 				}
 				else {
@@ -445,7 +450,7 @@ int main() {
 		}
 #endif
 		//blocks.InsertBlock("dirt", {});
-		int rad = 16;
+		int rad = 8;
 		for (int x = 0; x < rad; x++) {
 			for (int y = 0; y < rad; y++) {
 				for (int z = 0; z < rad; z++) {
@@ -453,7 +458,10 @@ int main() {
 					mat.emission = {};
 					mat.reflection = { (float)x / ((float)rad - 1.0f), (float)y / ((float)rad - 1.0f), (float)z / ((float)rad - 1.0f) };
 					uint matInd = blocks.materialBoxSet.GetMaterial(mat);
-					blocks.materialBoxSet.boxSet.InsertObject({ {},{ 1.0f / (float)rad, 1.0f / (float)rad, 1.0f / (float)rad}}, {(float)x * 1.0f / (float)rad, (float)y * 1.0f / (float)rad, (float)z * 1.0f / (float)rad }, matInd, 16.0f);
+					_BoxSet::Box box = {};
+					box.low = 0.0f;
+					box.high = 1.0f / (float)rad;
+					blocks.materialBoxSet.boxSet.InsertObject(box, {(float)x * 1.0f / (float)rad, (float)y * 1.0f / (float)rad, (float)z * 1.0f / (float)rad }, matInd, 1.0f);
 				}
 			}
 		}
@@ -468,7 +476,8 @@ int main() {
 		//}
 		//Print(&blocks.materialBoxSet.boxSet, 0, 0);
 
-		TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { 3.0f / 8.0f, 5.0 / 8.0f, 1.0f }, { 1.0f, 0.0f, 1.0f });
+		//TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { 1.595511, 1.351811, 0.328708 }, { 0.75 - 1.595511, 1.0 - 1.351811, 0.0 });
+		TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { 1.595511, 1.351811, 0.328708 }, { 1.0 - 1.595511, 0.75 - 1.351811, 0.0 });
 
 		std::cout << "Scale: " << result.scale << std::endl;
 		std::cout << "Index: " << result.ind << std::endl;
@@ -514,14 +523,16 @@ int main() {
 			//std::cout << blocks.materialBoxSet.boxSet.nodes.nextElement << " " << blocks.materialBoxSet.boxSet.containers.nextElement << std::endl;
 
 			camera.Update(cmdList);
-			
+			if (GetKeyState('R') & 0x8000)
+				camera.Print();
+
 			blocks.materialBoxSet.Update(cmdList);
 	
 			graphics.Clear({});
 	
 			renderer.Render(cmdList);
-			if (!(GetKeyState('R') & 0x8000))
-				denoiser.Render(cmdList);
+			//if (!(GetKeyState('R') & 0x8000))
+			//	denoiser.Render(cmdList);
 	
 			graphics.Render();
 	
