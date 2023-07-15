@@ -23,7 +23,7 @@ using namespace TR;
 export struct Camera {
 
 	struct Info {
-		Float3 position = { 1.595511, 1.351811, 0.328708 };
+		Float3 position = { 0.05, 0.05, 2.0 };
 		Float2 rotation = {};
 		float fov = 3.14f / 2.0f;
 		Uint2 windowSize = {};

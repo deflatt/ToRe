@@ -14,8 +14,10 @@ float4 main(VSOutput vsOutput) : SV_TARGET
     if (result.ind == noInd){
         return float4(SkyTrace(vsOutput.sightRay), 1.0f);
     }
+    return float4(result.debugCol, 1.0f);
+    //return float4(materials[result.ind].reflection, 1.0f);
     //float3 col = (float)numIts / 255.0f;
-    return float4(abs(result.normal), 1.0f);
+    //return float4(abs(result.normal), 1.0f);
     //return float4(col, 1.0f);
     //return float4((float)result.ind / 255.0f, (float)(result.ind - 256) / 255.0f, (float)(result.ind - 512) / 255.0f, 1.0f);
     //return float4(result.scale, result.scale / 2.0f, result.scale / 4.0f, 1.0f);
