@@ -378,7 +378,7 @@ int main() {
 		denoiser.Init((Long2)windowSize, cmdList);
 		std::cout << "Initialized denoiser" << std::endl;
 
-#if 0
+#if 1
 		blocks.LoadBlock("dirt", "dirt.png");
 		blocks.LoadBlock("sand", "sand.png");
 		blocks.LoadBlock("stone", "stone.png");
@@ -435,22 +435,22 @@ int main() {
 		//	blocks.materialBoxSet.boxSet.InsertObject(box, { 0.0f, 1.0f, 1.0f }, matInd, 1.0f);
 		//	
 		//}
-		int rad = 4;
-		for (int x = 0; x < 1; x++) {
-			for (int y = 0; y < 1; y++) {
-				for (int z = 0; z < rad; z++) {
-					MaterialBoxSet::Material mat = {};
-					mat.emission = {};
-					mat.reflection = { (float)x / ((float)rad - 1.0f), (float)y / ((float)rad - 1.0f), (float)z / ((float)rad) };
-					uint matInd = blocks.materialBoxSet.GetMaterial(mat);
-					_BoxSet::Box box = {};
-					box.low = 0.0f;
-					box.high = 1.0f / (float)rad;
-					//if ((rand() % 10) == 0)
-					blocks.materialBoxSet.boxSet.InsertObject(box, {(float)x * 1.0f / (float)rad, (float)y * 1.0f / (float)rad, (float)z * 1.0f / (float)rad }, matInd, 1.0f);
-				}
-			}
-		}
+		//int rad = 4;
+		//for (int x = 0; x < 1; x++) {
+		//	for (int y = 0; y < 1; y++) {
+		//		for (int z = 0; z < rad; z++) {
+		//			MaterialBoxSet::Material mat = {};
+		//			mat.emission = {};
+		//			mat.reflection = { (float)x / ((float)rad - 1.0f), (float)y / ((float)rad - 1.0f), (float)z / ((float)rad) };
+		//			uint matInd = blocks.materialBoxSet.GetMaterial(mat);
+		//			_BoxSet::Box box = {};
+		//			box.low = 0.0f;
+		//			box.high = 1.0f / (float)rad;
+		//			//if ((rand() % 10) == 0)
+		//			blocks.materialBoxSet.boxSet.InsertObject(box, {(float)x * 1.0f / (float)rad, (float)y * 1.0f / (float)rad, (float)z * 1.0f / (float)rad }, matInd, 1.0f);
+		//		}
+		//	}
+		//}
 		//{
 		//	MaterialBoxSet::Material mat = {};
 		//	mat.emission = {};
@@ -460,7 +460,7 @@ int main() {
 		//	blocks.materialBoxSet.boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 1.0f, 0.0f, 1.0f }, matInd, 2.0f);
 		//	blocks.materialBoxSet.boxSet.InsertObject({ {}, { 1.0f, 1.0f, 1.0f } }, { 0.0f, 0.0f, 0.0f }, matInd, 2.0f);
 		//}
-		Print(&blocks.materialBoxSet.boxSet, 0, 0);
+		//Print(&blocks.materialBoxSet.boxSet, 0, 0);
 
 		//TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { 1.595511, 1.351811, 0.328708 }, { 0.75 - 1.595511, 1.0 - 1.351811, 0.0 });
 		TraceResult result = Trace(&blocks.materialBoxSet.boxSet, { 0.05, 0.05, 2.0 }, { 0.0, 0.0, -1.0 });

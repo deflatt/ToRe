@@ -38,8 +38,8 @@ struct Box {
 #define NODE_TYPE_OBJECT 2
 
 struct Node {
-    //Box box;
-    float3 box[2];
+    Box box;
+    //float3 box[2];
     //Link childLink;
     uint3 childLink[2];
     NodeType type;
