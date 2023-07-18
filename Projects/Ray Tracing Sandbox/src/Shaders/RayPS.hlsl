@@ -5,17 +5,17 @@ float4 main(VSOutput vsOutput) : SV_TARGET
     pInd = (uint)vsOutput.position.y * camera[0].windowSize.x + (uint)vsOutput.position.x;
     vsOutput.sightRay = normalize(vsOutput.sightRay);
     
-    //LightTrace(camera[0].position, vsOutput.sightRay);
-    //float3 col = (float)numIts / 1.0f / 255.0f;
-    //return float4(col, 1.0f);
+    LightTrace(camera[0].position, vsOutput.sightRay);
     //return 0.0f; // discard; ?
+    float3 col = (float)numIts / 1.0f / 255.0f;
+    return float4(col, 1.0f);
     
-    TraceResult result = Trace(camera[0].position, vsOutput.sightRay);
-    if (result.ind == noInd){
-        return float4(SkyTrace(vsOutput.sightRay), 1.0f);
-    }
+    //TraceResult result = Trace(camera[0].position, vsOutput.sightRay);
+    //if (result.ind == noInd){
+    //    return float4(SkyTrace(vsOutput.sightRay), 1.0f);
+    //}
     //return float4(result.debugCol, 1.0f);
-    return float4(materials[result.ind].reflection, 1.0f);
+    //return float4(materials[result.ind].reflection, 1.0f);
     //float3 col = (float)numIts / 255.0f;
     //return float4(abs(result.normal), 1.0f);
     //return float4(col, 1.0f);

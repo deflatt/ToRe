@@ -14,7 +14,7 @@ void LightTrace(float3 origin, float3 ray){
         pixelInfo[pInd].incomingLight = SkyTrace(ray);
         return;
     }
-    pixelInfo[pInd].ind = noInd;
+    pixelInfo[pInd].ind = inTrace.ind;
     pixelInfo[pInd].pos = 0.0f;
     pixelInfo[pInd].normal = 0.0f;
     pixelInfo[pInd].incomingLight = 0.0f;

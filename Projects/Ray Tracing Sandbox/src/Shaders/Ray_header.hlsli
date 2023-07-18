@@ -1,4 +1,4 @@
-#define MAX_LOCATION_SIZE 24
+#define MAX_LOCATION_SIZE 14
 static const uint noInd = -1;
 static const float lim = 1.0f / 256.0f;
 
