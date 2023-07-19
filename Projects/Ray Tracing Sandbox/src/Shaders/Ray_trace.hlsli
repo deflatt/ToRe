@@ -7,15 +7,65 @@ struct TraceResult {
     float3 normal;
 };
 
+
 struct Intersection {
     float sMin;
+    float3 pos;
     float3 normal;
 };
 
-static uint numIts = 0;
+static uint numIntersectionChecks = 0;
+Intersection Intersects(float3 origin, float3 ray, float3 invRay, Box box, float3 boxOffset){
+    numIntersectionChecks++;
+
+    Intersection result;
+    result.sMin = -1.#INF;
+    float sMax = 1.#INF;
+    result.normal = 0.0f;
+    uint side = 0;
+    
+    float3 sLow = (boxOffset + box.low - origin) * invRay;
+    float3 sHigh = (boxOffset + box.high - origin) * invRay;
+    [unroll(3)] for (uint i = 0; i < 3; i++){
+        float sdMin = min(sLow[i], sHigh[i]);
+        float sdMax = max(sLow[i], sHigh[i]);
+        
+        if (sdMin > result.sMin){
+            result.sMin = sdMin;
+            side = i;
+        }
+        if (sdMax < sMax){
+            sMax = sdMax;
+        }
+    }
+    result.sMin = max(result.sMin, lim);
+    if (result.sMin > sMax){
+        result.sMin = -1.#INF;
+    }
+    else {
+        result.pos = origin + ray * result.sMin;
+        result.pos[side] = boxOffset[side] + ((invRay[side] > 0.0f) ? box.low[side] : box.high[side]);
+        result.normal[side] = (invRay[side] > 0.0f) ? -1.0f : 1.0f;
+    }
+    return result;
+}
+
 TraceResult Trace(float3 origin, float3 ray){
     const float3 invRay = 1.0f / ray;
-    const bool3 raySign = ray < 0.0f;
+    //const bool3 raySign = ray < 0.0f;
+    
+    bool linkSign;
+    uint linkDim;
+    {
+        float rMax = -1.#INF;
+        [unroll(3)] for (uint i = 0; i < 3; i++) {
+            if (abs(ray[i]) > rMax){
+                rMax = abs(ray[i]);
+                linkSign = ray[i] < 0.0f;
+                linkDim = i;
+            }
+        }
+    }
     
     TraceResult result;
     result.scale = 1.#INF;
@@ -26,10 +76,8 @@ TraceResult Trace(float3 origin, float3 ray){
     uint location[MAX_LOCATION_SIZE];
     location[0] = 0;
     uint curDepth = 0;
-    uint3 links[MAX_LOCATION_SIZE];
     
     float3 curOffset = 0.0f;
-    
     uint curInd;
     
     [loop] while (true) {
@@ -37,75 +85,41 @@ TraceResult Trace(float3 origin, float3 ray){
             break;
         
         curInd = location[curDepth];
-        
-        Container parentContainer = containers[curInd];
-        Node parentNode = nodes[parentContainer.node];
+
+        Container container = containers[curInd];
+        Node node = nodes[container.node];
         
         if (newContainer){
-            curOffset += parentContainer.offset;
-            [unroll(3)] for (uint i = 0; i < 3; i++)
-                links[curDepth][i] = parentNode.childLink[raySign[i]][i];
-        }
-        
-        uint minDim = noInd;
-        float minScale = 1.#INF;
-        [unroll(3)] for (uint i = 0; i < 3; i++) {
-            [loop] for (uint ind = links[curDepth][i]; ind != noInd; ind = containers[ind].siblingLink[raySign[i]][i], links[curDepth][i] = ind){
-                numIts++;
-                Container container = containers[ind];
-                Node node = nodes[container.node];
-                
-                float curScale = (curOffset[i] + container.offset[i] + node.box[raySign[i]][i] - origin[i]) * invRay[i];
-                
-                if (curScale >= result.scale)
-                    continue;
-                
-                curScale = max(0.0f, curScale);
-                float3 pos = origin + ray * curScale;
-                if (curScale > 0.0f)
-                    pos[i] = curOffset[i] + container.offset[i] + node.box[raySign[i]][i];
-                
-                if (!(all(pos >= curOffset + container.offset + node.box[0]) && all(pos <= curOffset + container.offset + node.box[1])))
-                    continue;
-                
-                
-                if (node.type == NODE_TYPE_OBJECT) {
-                    if (curScale < lim)
-                        continue;
+            curOffset += container.offset;
+            
+            Intersection intersection = Intersects(origin, ray, invRay, node.box, curOffset);
+            if (intersection.sMin != -1.#INF && intersection.sMin < result.scale){
+                if (node.type == NODE_TYPE_OBJECT){
                     result.ind = node.childLink[0][0];
-                    result.scale = curScale;
-                    result.pos = pos;
-                    result.normal = 0.0f;
-                    result.normal[i] = raySign[i] ? 1.0f : -1.0f;
-                    links[curDepth][i] = containers[ind].siblingLink[raySign[i]][i];
-                    break;
+                    result.scale = intersection.sMin;
+                    result.pos = intersection.pos;
+                    result.normal = intersection.sMin;
                 }
                 else {
-                    if (curScale < minScale){
-                        minScale = curScale;
-                        minDim = i;
-                    }
-                    break;
+                    location[curDepth + 1] = node.childLink[linkSign][linkDim];
+                    newContainer = true;
+                    curDepth++;
+                    continue;
                 }
             }
         }
-        if (minDim == noInd) {
-            if (curDepth == 0)
-                break;
-            curOffset -= parentContainer.offset;
-            newContainer = false;
-            curDepth--;
-        }
-        else {
-            uint nextInd = links[curDepth][minDim];
-            [unroll(3)] for (uint i = 0; i < 3; i++) {
-                if (links[curDepth][i] == nextInd)
-                    links[curDepth][i] = containers[links[curDepth][i]].siblingLink[raySign[i]][i];
-            }
-            location[curDepth + 1] = nextInd;
+        curOffset -= container.offset;
+        
+        if (container.siblingLink[linkSign][linkDim] != noInd) {
+            location[curDepth] = container.siblingLink[linkSign][linkDim];
             newContainer = true;
-            curDepth++;
+            continue;
         }
+        
+        if (curDepth == 0)
+            break;
+        newContainer = false;
+        curDepth--;
     }
     return result;
 }
