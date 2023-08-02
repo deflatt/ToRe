@@ -11,9 +11,25 @@
 #include <unordered_map>
 #include <random>
 
+
+namespace TR {
+    namespace Graphics {}
+    using namespace Graphics;
+}
+
+namespace TR {
+
+    namespace Graphics {
+
+        struct _Graphics {};
+
+    }
+
+}
+
 int main() {
 
-    
+    TR::_Graphics gfx = {};
 
     return 0;
 }
