@@ -52,7 +52,20 @@ namespace TR::Networking {
 			}
 		}
 
-
+		void Update(_Socket* sock, Procedure<WSANETWORKEVENTS&> proc, DWORD wait)
+		{
+			DWORD ret = WaitForSingleObject(sock->event, wait);
+			if (ret == WAIT_OBJECT_0) {
+				WSANETWORKEVENTS netEvents;
+				if (WSAEnumNetworkEvents(sock->sock, sock->event, &netEvents) != 0) {
+					throw E_FailedEventInfoRetrieval();
+				}
+				proc(netEvents);
+			}
+			else if (ret == WAIT_FAILED) {
+				throw E_FailedEventStatusRetrieval();
+			}
+		}
 
 	}
 

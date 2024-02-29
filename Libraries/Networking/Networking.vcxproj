@@ -14,8 +14,11 @@
     <ClCompile Include="src\Exception.ixx" />
     <ClCompile Include="src\Init.cpp" />
     <ClCompile Include="src\Init.ixx" />
+    <ClCompile Include="src\IOSocket.cpp" />
+    <ClCompile Include="src\IOSocket.ixx" />
     <ClCompile Include="src\Socket.cpp" />
     <ClCompile Include="src\Socket.ixx" />
+    <ClCompile Include="src\Sockets.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\NetworkingHeader.h" />

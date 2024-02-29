@@ -4,9 +4,9 @@ module;
 
 export module TR.Networking.Socket;
 
-import TR.Networking.Exception;
-import TR.Essentials.Event;
-import TR.Essentials.Procedure;
+export import TR.Networking.Exception;
+export import TR.Essentials.Event;
+export import TR.Essentials.Procedure;
 
 export namespace TR {
 
@@ -18,11 +18,17 @@ export namespace TR {
 		struct E_FailedSocketClosure : public _WinsockException {
 			E_FailedSocketClosure() : _WinsockException("Failed to close socket.") {}
 		};
-		struct E_FailedEventCreation() : public _WinsockException {
+		struct E_FailedEventCreation : public _WinsockException {
 			E_FailedEventCreation() : _WinsockException("Failed to create socket event.") {}
 		};
-		struct E_FailedEventRegistration() : public _WinsockException {
+		struct E_FailedEventRegistration : public _WinsockException {
 			E_FailedEventRegistration() : _WinsockException("Failed to register socket events.") {}
+		};
+		struct E_FailedEventInfoRetrieval : public _WinsockException {
+			E_FailedEventInfoRetrieval() : _WinsockException("Failed to get event info.") {}
+		};
+		struct E_FailedEventStatusRetrieval : public _WinsockException {
+			E_FailedEventStatusRetrieval() : _WinsockException("Failed to get event status.") {}
 		};
 
 		struct _Socket {
@@ -45,9 +51,10 @@ export namespace TR {
 			int Send(_Socket* sock, const char* buf, int length);
 
 			void RegisterEvents(_Socket* sock, LONG events);
-			//void Update(_Socket* sock, Procedure<);
+			void Update(_Socket* sock, Procedure<WSANETWORKEVENTS&> proc, DWORD wait = 0);
 
 		}
+		using namespace Socket;
 
 	}
 	using namespace Networking;

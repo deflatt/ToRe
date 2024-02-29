@@ -4,7 +4,7 @@ module;
 
 export module TR.Networking.Exception;
 
-import TR.Essentials.Exception;
+export import TR.Essentials.Exception;
 
 export namespace TR {
 
