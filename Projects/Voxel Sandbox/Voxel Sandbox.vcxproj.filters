@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\App">
+      <UniqueIdentifier>{9fbdad34-9b34-43b4-a382-b5a3c54141cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\Scene">
+      <UniqueIdentifier>{c66caea3-d22a-4691-bc7f-5c96e26a30d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\GUI">
+      <UniqueIdentifier>{47e070a3-4b80-4ae7-97fa-204c36c7c8ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\GUI\Window">
+      <UniqueIdentifier>{aaf48cbe-8760-4248-8f5d-81eb7f4cf661}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\GUI\Scene">
+      <UniqueIdentifier>{94c4bea3-04cd-45cb-8cb0-acca359d11c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\App\GUI\Scene\Renderer">
+      <UniqueIdentifier>{aa7db390-8a94-4a76-9f5b-f58d99f398af}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\GUI.ixx">
+      <Filter>Source Files\App</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\GUI\Window.ixx">
+      <Filter>Source Files\App\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\GUI\Window\Graphics.ixx">
+      <Filter>Source Files\App\GUI\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\GUI\Scene.ixx">
+      <Filter>Source Files\App\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\GUI\Scene\Renderer.ixx">
+      <Filter>Source Files\App\GUI\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\Scene.ixx">
+      <Filter>Source Files\App</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\Scene\Camera.ixx">
+      <Filter>Source Files\App\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\GUI\Scene\Camera.ixx">
+      <Filter>Source Files\App\GUI\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\App\Scene\World.ixx">
+      <Filter>Source Files\App\Scene</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="src\App\GUI\Scene\Renderer\RayVS.hlsl">
+      <Filter>Source Files\App\GUI\Scene\Renderer</Filter>
+    </FxCompile>
+    <FxCompile Include="src\App\GUI\Scene\Renderer\RayPS.hlsl">
+      <Filter>Source Files\App\GUI\Scene\Renderer</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>

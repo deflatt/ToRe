@@ -30,14 +30,14 @@ import TR.Graphics.FullRenderer;
 
 int main() {
 	using namespace TR;
-
+	
 	try {
 
 		EnableDebugger();
 		InitDevice();
 
 		CreateClass("ToRe Sandbox Class");
-
+		
 		_Window window = {};
 		Int2 windowSize = { 1280, 720 };
 		Create(&window, "ToRe Sandbox Class", "ToRe Sandbox", windowSize);

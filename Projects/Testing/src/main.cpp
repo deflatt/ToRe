@@ -9,48 +9,44 @@
 #include <functional>
 #include <chrono>
 
-using uint = unsigned int;
-using byte = unsigned char;
+class Resource {
 
-//import TR.Essentials.Clock;
+public:
 
-struct Clock {
-
-	using steady_clock = std::chrono::steady_clock;
-
-	struct Duration : public steady_clock::duration {
-
-		template <typename Rep>
-		Rep Seconds() const {
-			return std::chrono::duration_cast<std::chrono::duration<Rep>>(*this).count();
-		}
-
-	};
-
-	Duration Elapsed() {
-		return Duration(steady_clock::now() - start);
+	void Init() {
+		std::cout << "Resource Init" << std::endl;
 	}
 
-	Duration Restart() {
-		auto now = steady_clock::now();
-		Duration duration(now - start);
-		start = now;
-		return duration;
+};
+
+class Upload {
+
+public:
+
+	Resource* resource = {};
+
+	void Init() {
+		std::cout << "Upload Init" << std::endl;
 	}
 
-protected:
+};
 
-	steady_clock::time_point start = steady_clock::now();
+class UploadResource : public Resource, public Upload {
+
+public:
+
+	UploadResource() {
+		Upload::resource = this;
+	}
+
+	using Upload::Init;
 
 };
 
 int main() {
 
-	//TR::Clock<float> clock;
-	//while (true)
-	//	std::cout << clock.Elapsed().Seconds() << std::endl;
-
-	
+	UploadResource up;
+	up.Init();
 
 	return 0;
 }
