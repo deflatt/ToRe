@@ -10,7 +10,7 @@ namespace TR {
 			{
 				HRESULT ret = D3D12GetDebugInterface(__uuidof(ID3D12Debug), &debugController);
 				if (ret != 0) {
-					throw _FailedDebuggerCreation(ret);
+					throw FailedDebuggerCreationException(ret);
 				}
 				debugController->EnableDebugLayer();
 			}

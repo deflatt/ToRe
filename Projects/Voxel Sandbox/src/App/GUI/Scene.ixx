@@ -6,25 +6,36 @@ export import App.Scene;
 
 export namespace App::GUI::Scene {
 
-	struct _Scene {
+	class Scene {
 
-		Renderer::_Renderer renderer = {};
-		Camera::_Camera camera = {};
+	public:
+
+		void Init() {
+			renderer.graphics = graphics;
+			renderer.Init();
+
+			camera.data = &data->camera;
+			camera.renderer = &renderer;
+			camera.graphics = graphics;
+			camera.Init();
+
+			renderer.FinishInit();
+		}
+
+		void Update() {
+			
+		}
+
+		void Render() {
+			renderer.Render();
+		}
+
+		Renderer::Renderer renderer = {};
+		Camera::Camera camera = {};
+
+		Window::Graphics::Graphics* graphics = {};
+		App::Scene::Scene* data = {};
 
 	};
-
-	void Init(_Scene& scene, Window::_Window& window, App::Scene::_Scene& sceneData) {
-		Renderer::Init(scene.renderer, window.graphics);
-		Camera::Init(scene.camera, sceneData.camera, scene.renderer, window);
-		Renderer::FinishInit(scene.renderer);
-	}
-
-	void Update(_Scene& scene) {
-		Camera::Update(scene.camera);
-	}
-
-	void Render(_Scene& scene) {
-		Renderer::Render(scene.renderer);
-	}
 
 }

@@ -4,11 +4,11 @@ import App;
 
 int main() {
 
-	App::_App app = {};
-	App::Init(app);
+	App::App app = {};
+	app.Init();
 
-	while (App::IsRunning(app)) {
-		App::Update(app);
+	while (app.IsRunning()) {
+		app.Update();
 	}
 
 	return 0;

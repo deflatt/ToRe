@@ -9,44 +9,22 @@
 #include <functional>
 #include <chrono>
 
-class Resource {
+namespace GUI {
 
-public:
+	struct GUI {
 
-	void Init() {
-		std::cout << "Resource Init" << std::endl;
+	};
+
+	void Fnc() {
+		GUI gui;
 	}
 
-};
-
-class Upload {
-
-public:
-
-	Resource* resource = {};
-
-	void Init() {
-		std::cout << "Upload Init" << std::endl;
-	}
-
-};
-
-class UploadResource : public Resource, public Upload {
-
-public:
-
-	UploadResource() {
-		Upload::resource = this;
-	}
-
-	using Upload::Init;
-
-};
+}
 
 int main() {
 
-	UploadResource up;
-	up.Init();
+	GUI::Fnc();
+	
 
 	return 0;
 }
